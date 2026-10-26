@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="SysAnalyzer">
+<title>__REPORT_TITLE__</title>
+<style>
+:root{
+  --bg:#0d1117;--bg2:#131a22;--card:#161d27;--card2:#1a2330;
+  --border:#2a3644;--text:#d7dee8;--muted:#8b98a9;--faint:#5c6878;
+  --accent:#4f8cff;--accent2:#7ab8ff;--ok:#3fb950;--warn:#d29922;--crit:#f85149;
+  --ok-bg:rgba(63,185,80,.12);--warn-bg:rgba(210,153,34,.12);--crit-bg:rgba(248,81,73,.12);
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:linear-gradient(160deg,var(--bg) 0%,var(--bg2) 100%);color:var(--text);
+  font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;min-height:100vh}
+a{color:var(--accent2)}
+h1,h2,h3{font-weight:600;letter-spacing:.2px}
+
+/* ---------- top bar ---------- */
+.topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+  padding:12px 22px;background:rgba(13,17,23,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:700;white-space:nowrap}
+.brand .logo{width:26px;height:26px;border-radius:6px;background:linear-gradient(135deg,var(--accent),#9b59ff);
+  display:inline-flex;align-items:center;justify-content:center;font-size:14px;color:#fff}
+.topbar-meta{color:var(--muted);font-size:12px}
+.controls{display:flex;align-items:center;gap:8px;margin-left:auto}
+.sel-label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+select,input[type=search]{background:var(--card);border:1px solid var(--border);color:var(--text);
+  border-radius:8px;padding:7px 10px;font:inherit;font-size:13px;outline:none}
+select:focus,input[type=search]:focus{border-color:var(--accent)}
+input[type=search]{min-width:220px}
+
+main{max-width:1280px;margin:0 auto;padding:24px 22px 60px}
+section{margin-bottom:34px}
+
+/* ---------- headings ---------- */
+.sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.sec-head h2{font-size:19px}
+.sec-head .sub{color:var(--muted);font-size:12.5px}
+
+/* ---------- fleet overview ---------- */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:18px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.stat .k{color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+.stat .v{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.stat .s{color:var(--faint);font-size:12px;margin-top:3px}
+.host-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.host-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;
+  cursor:pointer;transition:border-color .15s,transform .1s;text-align:left;width:100%;color:inherit;font:inherit}
+.host-card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.host-card.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.host-card .hc-top{display:flex;align-items:center;gap:9px;margin-bottom:6px}
+.host-card .hc-name{font-weight:700;font-size:15px;word-break:break-all}
+.host-card .hc-os{color:var(--muted);font-size:12px;margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hc-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.chip{background:var(--card2);border-radius:20px;padding:2px 9px;font-size:11.5px;color:var(--muted)}
+.chip b{color:var(--text);font-weight:600}
+
+/* ---------- status ---------- */
+.dot{width:9px;height:9px;border-radius:50%;flex:none}
+.dot.ok{background:var(--ok);box-shadow:0 0 6px var(--ok)}
+.dot.warn{background:var(--warn);box-shadow:0 0 6px var(--warn)}
+.dot.crit{background:var(--crit);box-shadow:0 0 6px var(--crit)}
+.badge{display:inline-flex;align-items:center;gap:5px;border-radius:6px;padding:1.5px 8px;font-size:11px;
+  font-weight:600;letter-spacing:.3px;text-transform:uppercase}
+.badge.ok{color:var(--ok);background:var(--ok-bg)}
+.badge.warn{color:var(--warn);background:var(--warn-bg)}
+.badge.crit{color:var(--crit);background:var(--crit-bg)}
+.badge.muted{color:var(--muted);background:rgba(139,152,169,.12)}
+
+/* ---------- meters ---------- */
+.meter{background:#0b0f14;border:1px solid var(--border);border-radius:6px;height:8px;overflow:hidden;margin:4px 0}
+.meter-fill{height:100%;border-radius:5px;background:var(--ok);transition:width .4s ease}
+.meter-fill.warn{background:var(--warn)}
+.meter-fill.crit{background:var(--crit)}
+.meter-row{margin-bottom:10px}
+.meter-row .mr-label{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.meter-row .mr-label b{color:var(--text);font-weight:600}
+
+/* ---------- cards & grids ---------- */
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px}
+.card h3{font-size:14.5px;margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card h3 .spacer{margin-left:auto}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.kv{display:grid;grid-template-columns:minmax(120px,auto) 1fr;gap:6px 16px;font-size:13px}
+.kv dt{color:var(--muted)}
+.kv dd{word-break:break-word;font-variant-numeric:tabular-nums}
+.kv dd.mono{font-family:var(--mono);font-size:12.5px}
+
+/* ---------- tables ---------- */
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px}
+table{width:auto;min-width:100%;border-collapse:collapse;font-size:13px}
+thead th{position:sticky;top:0;background:var(--card2);color:var(--muted);text-align:left;
+  padding:9px 12px;font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;
+  user-select:none;white-space:nowrap;border-bottom:1px solid var(--border)}
+thead th:hover{color:var(--text)}
+thead th .arrow{font-size:10px;margin-left:4px}
+tbody td{padding:8px 12px;border-bottom:1px solid rgba(42,54,68,.5);vertical-align:top;word-break:break-word}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:rgba(79,140,255,.06)}
+td.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.tbl-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.tbl-toolbar .count{color:var(--muted);font-size:12.5px;margin-left:auto;white-space:nowrap}
+.btn{background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:8px;
+  padding:6px 12px;font-size:12.5px;cursor:pointer}
+.btn:hover{border-color:var(--accent);color:var(--accent2)}
+
+/* ---------- misc ---------- */
+.empty{color:var(--muted);font-size:13px;padding:18px;text-align:center;border:1px dashed var(--border);
+  border-radius:10px}
+.err-panel{border:1px solid rgba(248,81,73,.4);background:var(--crit-bg);border-radius:10px;padding:14px 16px}
+.err-panel ul{margin:8px 0 0 18px}
+.err-panel li{margin-bottom:4px;font-size:12.5px}
+details.coverage{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 16px}
+details.coverage summary{cursor:pointer;color:var(--muted);font-size:13px;font-weight:600}
+details.coverage table{margin-top:10px}
+.note{color:var(--faint);font-size:12px;margin-top:6px}
+.footer{max-width:1280px;margin:0 auto;padding:18px 22px 40px;color:var(--faint);font-size:12px;
+  border-top:1px solid var(--border)}
+.fleetbar{display:flex;height:26px;border-radius:8px;overflow:hidden;border:1px solid var(--border);margin-top:4px}
+.fleetbar div{display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;color:#fff}
+.host-anchor{scroll-margin-top:80px}
+@media (max-width:700px){
+  .topbar{padding:10px 14px}
+  main{padding:16px 12px 40px}
+  input[type=search]{min-width:140px}
+}
+@media print{
+  .topbar,.tbl-toolbar,.host-card{display:none}
+  body{background:#fff;color:#000}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand"><span class="logo">S</span> <span id="brandTitle"></span></div>
+  <div class="topbar-meta" id="generatedMeta"></div>
+  <div class="controls">
+    <label class="sel-label" for="hostSelect">Host</label>
+    <select id="hostSelect"></select>
+  </div>
+</header>
+
+<main>
+  <section id="fleetSection">
+    <div class="sec-head">
+      <h2>Fleet Overview</h2>
+      <span class="sub" id="fleetSub"></span>
+    </div>
+    <div class="stat-grid" id="statGrid"></div>
+    <div class="host-grid" id="hostGrid"></div>
+  </section>
+
+  <section id="hostDetail" class="host-anchor">
+    <div class="sec-head">
+      <h2 id="detailTitle">Host Detail</h2>
+      <span class="sub" id="detailSub"></span>
+    </div>
+    <div id="detailBody"></div>
+  </section>
+</main>
+
+<div class="footer">
+  Generated by SysAnalyzer &middot; <span id="footerMeta"></span> &middot;
+  Self-contained report: all CSS, JavaScript and data are embedded; works fully offline.
+</div>
+
+<script type="application/json" id="report-data">__REPORT_DATA__</script>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============================ utilities ============================ */
+
+  function $(sel, root) { return (root || document).querySelector(sel); }
+  function all(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined && text !== null) e.textContent = text;
+    return e;
+  }
+  function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+
+  function fmtBytes(b) {
+    if (b === null || b === undefined || isNaN(b)) return '\u2014';
+    var u = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'], i = 0, v = b;
+    while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
+    return (i === 0 ? v : v.toFixed(v >= 100 ? 0 : 1)) + ' ' + u[i];
+  }
+  function fmtNum(v) { return (v === null || v === undefined) ? '\u2014' : String(v); }
+  function fmtDate(v) {
+    if (!v) return '\u2014';
+    var d = new Date(v);
+    if (isNaN(d.getTime())) return String(v);   // registry InstallDate (yyyyMMdd) etc.
+    try { return d.toLocaleString(); } catch (e) { return String(v); }
+  }
+  function fmtPct(v) {
+    if (v === null || v === undefined) return '\u2014';
+    return String(Math.round(v * 10) / 10) + '%';
+  }
+  function statusClass(s) {
+    if (s === 'Success') return 'ok';
+    if (s === 'Partial') return 'warn';
+    return 'crit';
+  }
+  function coverageBadge(c) {
+    var map = { Complete: 'ok', Partial: 'warn', Failed: 'crit', NotRequested: 'muted' };
+    return el('span', 'badge ' + (map[c] || 'muted'), c || 'Unknown');
+  }
+
+  /* ============================ data ============================ */
+
+  var DATA = JSON.parse($('#report-data').textContent);
+  var HOSTS = (DATA.hosts || []).slice();
+
+  var state = { selected: 0 };
+
+  /* ============================ meters ============================ */
+
+  function levelClass(pct) {
+    if (pct === null || pct === undefined) return '';
+    if (pct >= 90) return 'crit';
+    if (pct >= 75) return 'warn';
+    return '';
+  }
+  function meter(pct, labelLeft, labelRight) {
+    var row = el('div', 'meter-row');
+    var lab = el('div', 'mr-label');
+    lab.appendChild(el('span', null, labelLeft));
+    if (labelRight !== undefined) lab.appendChild(el('b', null, labelRight));
+    var m = el('div', 'meter');
+    var f = el('div', 'meter-fill ' + levelClass(pct));
+    if (pct !== null && pct !== undefined && !isNaN(pct)) f.style.width = Math.max(0, Math.min(100, pct)) + '%';
+    else f.style.width = '0%';
+    m.appendChild(f);
+    row.appendChild(lab); row.appendChild(m);
+    return row;
+  }
+
+  /* ============================ tables ============================ */
+
+  var tableSeq = 0;
+  function makeTable(opts) {
+    // opts: {columns:[{key,label,format,numeric}], rows, name, searchable}
+    var columns = opts.columns, rows = opts.rows.slice();
+    var sortState = { col: -1, dir: 1 };
+    var query = '';
+
+    var wrap = el('div');
+    var toolbar = el('div', 'tbl-toolbar');
+
+    if (opts.searchable) {
+      var search = el('input'); search.type = 'search';
+      search.placeholder = 'Search ' + (opts.name || 'rows') + '\u2026';
+      search.setAttribute('aria-label', 'Search ' + (opts.name || ''));
+      search.addEventListener('input', function () {
+        query = search.value.toLowerCase();
+        renderBody();
+      });
+      toolbar.appendChild(search);
+    }
+
+    var csvBtn = el('button', 'btn', 'Export CSV');
+    csvBtn.addEventListener('click', function () { exportCsv(); });
+    toolbar.appendChild(csvBtn);
+
+    var count = el('span', 'count');
+    toolbar.appendChild(count);
+    wrap.appendChild(toolbar);
+
+    var tableWrap = el('div', 'table-wrap');
+    var table = el('table');
+    var thead = el('thead');
+    var headRow = el('tr');
+    columns.forEach(function (c, i) {
+      var th = el('th');
+      th.appendChild(document.createTextNode(c.label));
+      th.addEventListener('click', function () {
+        if (sortState.col === i) { sortState.dir *= -1; } else { sortState.col = i; sortState.dir = 1; }
+        renderBody();
+      });
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+    var tbody = el('tbody');
+    table.appendChild(tbody);
+    tableWrap.appendChild(table);
+    wrap.appendChild(tableWrap);
+
+    function cellText(row, c) {
+      var v = row[c.key];
+      if (c.format) return c.format(v, row);
+      return (v === null || v === undefined || v === '') ? '\u2014' : String(v);
+    }
+    function visibleRows() {
+      var out = rows;
+      if (query) {
+        out = rows.filter(function (r) {
+          return columns.some(function (c) { return cellText(r, c).toLowerCase().indexOf(query) !== -1; });
+        });
+      }
+      if (sortState.col >= 0) {
+        var col = columns[sortState.col];
+        out = out.slice().sort(function (a, b) {
+          var va = a[col.key], vb = b[col.key];
+          if (va === null || va === undefined) return 1;
+          if (vb === null || vb === undefined) return -1;
+          if (col.numeric || (typeof va === 'number' && typeof vb === 'number')) {
+            return (Number(va) - Number(vb)) * sortState.dir;
+          }
+          return String(va).localeCompare(String(vb), undefined, { numeric: true }) * sortState.dir;
+        });
+      }
+      return out;
+    }
+    function renderHead() {
+      all('th', thead).forEach(function (th, i) {
+        clear(th);
+        th.appendChild(document.createTextNode(columns[i].label));
+        if (sortState.col === i) th.appendChild(el('span', 'arrow', sortState.dir === 1 ? '\u25B2' : '\u25BC'));
+      });
+    }
+    function renderBody() {
+      renderHead();
+      clear(tbody);
+      var vis = visibleRows();
+      vis.forEach(function (r) {
+        var tr = el('tr');
+        columns.forEach(function (c) {
+          var td = el('td', c.numeric ? 'num' : null);
+          td.textContent = cellText(r, c);
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+      if (vis.length === 0) {
+        var tr = el('tr');
+        var td = el('td');
+        td.colSpan = columns.length;
+        td.className = 'empty';
+        td.textContent = 'No matching entries.';
+        tr.appendChild(td); tbody.appendChild(tr);
+      }
+      count.textContent = vis.length + ' of ' + rows.length + ' entries';
+    }
+    function exportCsv() {
+      var vis = visibleRows();
+      var lines = [columns.map(function (c) { return csvEsc(c.label); }).join(',')];
+      vis.forEach(function (r) {
+        lines.push(columns.map(function (c) { return csvEsc(cellText(r, c)); }).join(','));
+      });
+      var blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = el('a'); a.href = url; a.download = (opts.name || 'export') + '.csv';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 500);
+    }
+    function csvEsc(v) {
+      var s = String(v);
+      if (/[",\r\n]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
+      return s;
+    }
+
+    renderBody();
+    return wrap;
+  }
+
+  /* ============================ fleet ============================ */
+
+  function hostApps(h) { return (h.Applications || []); }
+  function hostPatches(h) { return (h.Patches || []); }
+  function hostRam(h) { return (h.Memory && h.Memory.TotalBytes) || 0; }
+  function hostCpuUtil(h) { return (h.Cpu && h.Cpu.UtilizationPercent) !== undefined && h.Cpu ? h.Cpu.UtilizationPercent : null; }
+  function hostRamPct(h) { return (h.Memory && h.Memory.UsedPercent !== undefined) ? h.Memory.UsedPercent : null; }
+
+  function renderFleet() {
+    // Summary stats
+    var grid = $('#statGrid'); clear(grid);
+    var online = HOSTS.filter(function (h) { return h.Status !== 'Unreachable'; });
+    var totalApps = HOSTS.reduce(function (n, h) { return n + hostApps(h).length; }, 0);
+    var totalPatches = HOSTS.reduce(function (n, h) { return n + hostPatches(h).length; }, 0);
+    var totalRam = HOSTS.reduce(function (n, h) { return n + hostRam(h); }, 0);
+    var totalDisk = HOSTS.reduce(function (n, h) { return n + ((h.Storage && h.Storage.TotalBytes) || 0); }, 0);
+    var freeDisk = HOSTS.reduce(function (n, h) { return n + ((h.Storage && h.Storage.FreeBytes) || 0); }, 0);
+    var diskPct = totalDisk > 0 ? ((totalDisk - freeDisk) / totalDisk) * 100 : null;
+
+    function stat(k, v, s) {
+      var d = el('div', 'stat');
+      d.appendChild(el('div', 'k', k));
+      d.appendChild(el('div', 'v', v));
+      if (s) d.appendChild(el('div', 's', s));
+      return d;
+    }
+    grid.appendChild(stat('Hosts', String(HOSTS.length), online.length + ' reachable'));
+    grid.appendChild(stat('Applications', String(totalApps), 'across all hosts'));
+    grid.appendChild(stat('Patches', String(totalPatches), 'across all hosts'));
+    grid.appendChild(stat('Total Memory', fmtBytes(totalRam), 'physical'));
+    grid.appendChild(stat('Total Storage', fmtBytes(totalDisk), fmtPct(diskPct) + ' used'));
+
+    // Aggregate storage bar
+    if (diskPct !== null) {
+      var card = el('div', 'stat');
+      card.appendChild(el('div', 'k', 'Fleet Storage Used'));
+      card.appendChild(meter(Math.round(diskPct * 10) / 10, 'Used ' + fmtBytes(totalDisk - freeDisk), fmtBytes(freeDisk) + ' free'));
+      grid.appendChild(card);
+    }
+
+    $('#fleetSub').textContent = HOSTS.length + ' host' + (HOSTS.length === 1 ? '' : 's') + ' analysed';
+
+    // Host cards
+    var hg = $('#hostGrid'); clear(hg);
+    HOSTS.forEach(function (h, i) {
+      var card = el('button', 'host-card' + (i === state.selected ? ' active' : ''));
+      var top = el('div', 'hc-top');
+      top.appendChild(el('span', 'dot ' + statusClass(h.Status)));
+      top.appendChild(el('span', 'hc-name', h.ComputerName || 'unknown'));
+      card.appendChild(top);
+
+      var os = (h.Summary && h.Summary.OSName) || '';
+      var arch = (h.Summary && h.Summary.OSArchitecture) || '';
+      card.appendChild(el('div', 'hc-os', [os, arch].filter(Boolean).join(' \u00b7 ') || 'Operating system unavailable'));
+
+      var chips = el('div', 'hc-chips');
+      function chip(txt, b) { var c = el('span', 'chip'); c.appendChild(document.createTextNode(txt + ' ')); c.appendChild(el('b', null, b)); return c; }
+      if (h.Cpu && h.Cpu.TotalLogicalProcessors) chips.appendChild(chip('vCPU', String(h.Cpu.TotalLogicalProcessors)));
+      if (hostRam(h)) chips.appendChild(chip('RAM', fmtBytes(hostRam(h))));
+      chips.appendChild(chip('Apps', String(hostApps(h).length)));
+      chips.appendChild(chip('Patches', String(hostPatches(h).length)));
+      if (h.Status === 'Partial' || h.Status === 'Failed') chips.appendChild(chip('Errors', String((h.CollectionErrors || []).length)));
+      card.appendChild(chips);
+
+      if (h.Status !== 'Unreachable') {
+        card.appendChild(meter(hostCpuUtil(h), 'CPU', fmtPct(hostCpuUtil(h))));
+        card.appendChild(meter(hostRamPct(h), 'Memory', fmtPct(hostRamPct(h))));
+      } else {
+        var e = el('div', 'err-panel');
+        e.appendChild(el('div', null, 'Unreachable: ' + ((h.CollectionErrors || [])[0] || 'connection failed')));
+        card.appendChild(e);
+      }
+
+      card.addEventListener('click', function () { selectHost(i); });
+      hg.appendChild(card);
+    });
+  }
+
+  /* ============================ host detail ============================ */
+
+  function kvCard(title, pairs) {
+    var card = el('div', 'card');
+    card.appendChild(el('h3', null, title));
+    var dl = el('dl', 'kv');
+    pairs.forEach(function (p) {
+      if (p[1] === undefined) return;
+      dl.appendChild(el('dt', null, p[0]));
+      var dd = el('dd', p[2] ? 'mono' : null);
+      dd.textContent = (p[1] === null || p[1] === '') ? '\u2014' : p[1];
+      dl.appendChild(dd);
+    });
+    card.appendChild(dl);
+    return card;
+  }
+
+  function renderHost(h) {
+    var body = $('#detailBody'); clear(body);
+    $('#detailTitle').textContent = 'Host Detail \u2014 ' + (h.ComputerName || 'unknown');
+    $('#detailSub').textContent = 'Collected ' + fmtDate(h.Timestamp) + ' \u00b7 Status: ' + h.Status;
+
+    if (h.Status === 'Unreachable') {
+      var err = el('div', 'err-panel');
+      err.appendChild(el('h3', null, 'Host unreachable'));
+      var ul = el('ul');
+      (h.CollectionErrors || []).forEach(function (e) { ul.appendChild(el('li', null, e)); });
+      err.appendChild(ul);
+      body.appendChild(err);
+      renderCoverage(h, body);
+      return;
+    }
+
+    /* ---- summary ---- */
+    if (h.Summary) {
+      var s = h.Summary;
+      var g = el('div', 'grid-2');
+      g.appendChild(kvCard('System Identity', [
+        ['Computer name', s.ComputerName], ['Domain', s.Domain], ['Manufacturer', s.Manufacturer],
+        ['Model', s.Model], ['Serial number', s.SerialNumber],
+        ['BIOS', s.BIOSVersion + (s.BIOSReleaseDate ? ' (' + fmtDate(s.BIOSReleaseDate) + ')' : '')],
+        ['Logon user', s.LogonUser]
+      ]));
+      g.appendChild(kvCard('Operating System', [
+        ['OS', s.OSName], ['Version', s.OSVersion + ' (build ' + s.OSBuildNumber + ')'],
+        ['Architecture', s.OSArchitecture], ['System drive', s.SystemDrive],
+        ['Installed', fmtDate(s.InstallDate)], ['Last boot', fmtDate(s.LastBootUpTime)],
+        ['Uptime', s.Uptime], ['Time zone', s.TimeZone]
+      ]));
+      body.appendChild(g);
+    }
+
+    /* ---- CPU / memory / storage ---- */
+    var perf = el('div', 'grid-3');
+
+    if (h.Cpu) {
+      var cpuCard = el('div', 'card');
+      cpuCard.appendChild(el('h3', null, 'CPU'));
+      if (h.Cpu.UtilizationPercent !== null && h.Cpu.UtilizationPercent !== undefined) {
+        cpuCard.appendChild(meter(h.Cpu.UtilizationPercent, 'Current utilization', fmtPct(h.Cpu.UtilizationPercent)));
+      }
+      var dl = el('dl', 'kv');
+      [['Cores', h.Cpu.TotalCores], ['Logical processors', h.Cpu.TotalLogicalProcessors]].forEach(function (p) {
+        dl.appendChild(el('dt', null, p[0]));
+        var dd = el('dd'); dd.textContent = fmtNum(p[1]); dl.appendChild(dd);
+      });
+      cpuCard.appendChild(dl);
+      if ((h.Cpu.Processors || []).length > 0) {
+        cpuCard.appendChild(el('div', 'note', (h.Cpu.Processors.length) + ' physical processor(s):'));
+        cpuCard.appendChild(makeTable({
+          name: 'processors', rows: h.Cpu.Processors, columns: [
+            { key: 'Name', label: 'Processor' },
+            { key: 'MaxClockSpeedMHz', label: 'Max speed', format: function (v) { return v ? v + ' MHz' : '\u2014'; }, numeric: true },
+            { key: 'NumberOfCores', label: 'Cores', numeric: true },
+            { key: 'NumberOfLogicalProcessors', label: 'Logical', numeric: true }
+          ]
+        }));
+      }
+      perf.appendChild(cpuCard);
+    }
+
+    if (h.Memory) {
+      var m = h.Memory;
+      var memCard = el('div', 'card');
+      memCard.appendChild(el('h3', null, 'Memory'));
+      memCard.appendChild(meter(m.UsedPercent, 'In use', fmtPct(m.UsedPercent)));
+      var dl2 = el('dl', 'kv');
+      [['Total', fmtBytes(m.TotalBytes)], ['Available', fmtBytes(m.AvailableBytes)]].forEach(function (p) {
+        dl2.appendChild(el('dt', null, p[0])); dl2.appendChild(el('dd', null, p[1]));
+      });
+      (m.PageFiles || []).forEach(function (pf) {
+        dl2.appendChild(el('dt', null, 'Page file'));
+        var dd = el('dd'); dd.textContent = pf.Name + ' \u00b7 ' + (pf.AllocatedSizeMB || 0) + ' MB alloc, ' + (pf.CurrentUsageMB || 0) + ' MB used'; dl2.appendChild(dd);
+      });
+      memCard.appendChild(dl2);
+      if ((m.Modules || []).length > 0) {
+        memCard.appendChild(el('div', 'note', m.Modules.length + ' module(s):'));
+        memCard.appendChild(makeTable({
+          name: 'memory-modules', rows: m.Modules, columns: [
+            { key: 'DeviceLocator', label: 'Slot' },
+            { key: 'CapacityBytes', label: 'Capacity', format: fmtBytes, numeric: true },
+            { key: 'SpeedMHz', label: 'Speed', format: function (v) { return v ? v + ' MHz' : '\u2014'; }, numeric: true },
+            { key: 'Manufacturer', label: 'Manufacturer' },
+            { key: 'PartNumber', label: 'Part number' }
+          ]
+        }));
+      }
+      perf.appendChild(memCard);
+    }
+
+    if (h.Storage) {
+      var stCard = el('div', 'card');
+      stCard.appendChild(el('h3', null, 'Storage'));
+      (h.Storage.Volumes || []).forEach(function (v) {
+        stCard.appendChild(meter(v.UsedPercent,
+          (v.DeviceID || '?') + (v.VolumeName ? ' (' + v.VolumeName + ')' : '') + (v.FileSystem ? ' \u00b7 ' + v.FileSystem : ''),
+          fmtBytes(v.FreeBytes) + ' free of ' + fmtBytes(v.SizeBytes)));
+      });
+      if ((h.Storage.PhysicalDisks || []).length > 0) {
+        stCard.appendChild(makeTable({
+          name: 'physical-disks', rows: h.Storage.PhysicalDisks, columns: [
+            { key: 'Model', label: 'Disk' },
+            { key: 'InterfaceType', label: 'Interface' },
+            { key: 'SizeBytes', label: 'Size', format: fmtBytes, numeric: true },
+            { key: 'Partitions', label: 'Partitions', numeric: true }
+          ]
+        }));
+      }
+      perf.appendChild(stCard);
+    }
+    if (perf.childNodes.length) body.appendChild(perf);
+
+    /* ---- applications ---- */
+    var appsCard = el('div', 'card');
+    appsCard.appendChild(el('h3', null, 'Installed Applications'));
+    appsCard.appendChild(el('span', 'badge ' + (coverageLevel(h, 'Applications')), 'Coverage: ' + (h.Coverage ? h.Coverage.Applications : 'n/a')));
+    if (hostApps(h).length > 0) {
+      appsCard.appendChild(makeTable({
+        name: 'applications', searchable: true, rows: hostApps(h), columns: [
+          { key: 'Name', label: 'Name' },
+          { key: 'Version', label: 'Version' },
+          { key: 'Publisher', label: 'Publisher' },
+          { key: 'InstallDate', label: 'Installed', format: function (v) { return v || '\u2014'; } },
+          { key: 'SizeMB', label: 'Size', format: function (v) { return v ? v + ' MB' : '\u2014'; }, numeric: true },
+          { key: 'Source', label: 'Source' }
+        ]
+      }));
+    } else {
+      appsCard.appendChild(el('div', 'empty',
+        'No application entries were returned (coverage: ' + (h.Coverage ? h.Coverage.Applications : 'n/a') + ').'));
+    }
+    body.appendChild(appsCard);
+
+    /* ---- patches ---- */
+    var patchCard = el('div', 'card');
+    patchCard.appendChild(el('h3', null, 'Installed Patches & Updates'));
+    patchCard.appendChild(el('span', 'badge ' + (coverageLevel(h, 'Patches')), 'Coverage: ' + (h.Coverage ? h.Coverage.Patches : 'n/a')));
+    if (hostPatches(h).length > 0) {
+      patchCard.appendChild(makeTable({
+        name: 'patches', searchable: true, rows: hostPatches(h), columns: [
+          { key: 'Id', label: 'ID / Title' },
+          { key: 'Description', label: 'Description' },
+          { key: 'InstalledOn', label: 'Installed on', format: fmtDate },
+          { key: 'InstalledBy', label: 'Installed by' },
+          { key: 'Source', label: 'Source' },
+          { key: 'Result', label: 'Result', format: function (v) { return v || '\u2014'; } }
+        ]
+      }));
+    } else {
+      patchCard.appendChild(el('div', 'empty',
+        'No patches were returned (coverage: ' + (h.Coverage ? h.Coverage.Patches : 'n/a') + ').'));
+    }
+    body.appendChild(patchCard);
+
+    /* ---- Windows Update history (separate, clearly labelled) ---------- */
+    if ((h.UpdateHistory || []).length > 0) {
+      var histCard = el('div', 'card');
+      histCard.appendChild(el('h3', null, 'Windows Update History (installation events)'));
+      histCard.appendChild(el('span', 'badge ' + (coverageLevel(h, 'UpdateHistory')), 'Coverage: ' + (h.Coverage ? h.Coverage.UpdateHistory : 'n/a')));
+      histCard.appendChild(el('div', 'note', 'Installation-event history from Windows Update - NOT the installed-patch inventory. Updates may later have been superseded or removed; counts are kept separate from the Patches section.'));
+      histCard.appendChild(makeTable({
+        name: 'update-history', searchable: true, rows: h.UpdateHistory, columns: [
+          { key: 'Id', label: 'Update' },
+          { key: 'Description', label: 'Type' },
+          { key: 'InstalledOn', label: 'Installed on', format: fmtDate },
+          { key: 'Result', label: 'Result' },
+          { key: 'InstalledBy', label: 'Requested by' }
+        ]
+      }));
+      body.appendChild(histCard);
+    }
+
+    renderCoverage(h, body);
+  }
+
+  function coverageLevel(h, cat) {
+    var map = { Complete: 'ok', Partial: 'warn', Failed: 'crit', NotRequested: 'muted' };
+    var c = h.Coverage && h.Coverage[cat];
+    return map[c] || 'muted';
+  }
+
+  function renderCoverage(h, body) {
+    var det = el('details', 'coverage');
+    var sum = el('summary', null, 'Collection coverage & errors');
+    det.appendChild(sum);
+    var inner = el('div');
+    var rows = [];
+    ['Summary', 'CPU', 'Memory', 'Storage', 'Applications', 'Patches', 'UpdateHistory'].forEach(function (cat) {
+      var st = h.Coverage ? h.Coverage[cat] : 'Unknown';
+      var note = (h.CoverageNotes && h.CoverageNotes[cat]) || '';
+      rows.push({ Category: cat, Status: st, Notes: note });
+    });
+    inner.appendChild(makeTable({
+      name: 'coverage', rows: rows, columns: [
+        { key: 'Category', label: 'Category' },
+        { key: 'Status', label: 'Status' },
+        { key: 'Notes', label: 'Notes / scope limits' }
+      ]
+    }));
+    if ((h.CollectionErrors || []).length > 0) {
+      var err = el('div', 'err-panel');
+      err.appendChild(el('div', null, 'Collection errors:'));
+      var ul = el('ul');
+      (h.CollectionErrors || []).forEach(function (e) { ul.appendChild(el('li', null, e)); });
+      err.appendChild(ul);
+      inner.appendChild(err);
+    }
+    det.appendChild(inner);
+    body.appendChild(det);
+  }
+
+  /* ============================ wiring ============================ */
+
+  function selectHost(i) {
+    state.selected = i;
+    all('.host-card').forEach(function (c, idx) { c.classList.toggle('active', idx === i); });
+    $('#hostSelect').value = String(i);
+    renderHost(HOSTS[i]);
+    var anchor = document.getElementById('hostDetail');
+    if (anchor && window.scrollY + 200 > anchor.offsetTop) anchor.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function init() {
+    $('#brandTitle').textContent = DATA.title || 'System Analysis Report';
+    document.title = DATA.title || 'System Analysis Report';
+    $('#generatedMeta').textContent = 'Generated ' + fmtDate(DATA.generatedUtc) + ' UTC';
+    $('#footerMeta').textContent = 'Generated ' + fmtDate(DATA.generatedUtc) + ' UTC \u00b7 ' + HOSTS.length + ' host(s)';
+
+    var sel = $('#hostSelect'); clear(sel);
+    HOSTS.forEach(function (h, i) {
+      var o = el('option');
+      o.value = String(i);
+      o.textContent = (h.ComputerName || 'unknown') + ' \u2014 ' + h.Status;
+      sel.appendChild(o);
+    });
+    sel.addEventListener('change', function () { selectHost(parseInt(sel.value, 10)); });
+
+    renderFleet();
+    if (HOSTS.length > 0) renderHost(HOSTS[0]);
+    else $('#detailBody').appendChild(el('div', 'empty', 'No analysis results were provided.'));
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
