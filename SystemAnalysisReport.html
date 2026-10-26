@@ -1,0 +1,1889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="SysAnalyzer">
+<title>System Analysis Report</title>
+<style>
+:root{
+  --bg:#0d1117;--bg2:#131a22;--card:#161d27;--card2:#1a2330;
+  --border:#2a3644;--text:#d7dee8;--muted:#8b98a9;--faint:#5c6878;
+  --accent:#4f8cff;--accent2:#7ab8ff;--ok:#3fb950;--warn:#d29922;--crit:#f85149;
+  --ok-bg:rgba(63,185,80,.12);--warn-bg:rgba(210,153,34,.12);--crit-bg:rgba(248,81,73,.12);
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:linear-gradient(160deg,var(--bg) 0%,var(--bg2) 100%);color:var(--text);
+  font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;min-height:100vh}
+a{color:var(--accent2)}
+h1,h2,h3{font-weight:600;letter-spacing:.2px}
+
+/* ---------- top bar ---------- */
+.topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+  padding:12px 22px;background:rgba(13,17,23,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:700;white-space:nowrap}
+.brand .logo{width:26px;height:26px;border-radius:6px;background:linear-gradient(135deg,var(--accent),#9b59ff);
+  display:inline-flex;align-items:center;justify-content:center;font-size:14px;color:#fff}
+.topbar-meta{color:var(--muted);font-size:12px}
+.controls{display:flex;align-items:center;gap:8px;margin-left:auto}
+.sel-label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+select,input[type=search]{background:var(--card);border:1px solid var(--border);color:var(--text);
+  border-radius:8px;padding:7px 10px;font:inherit;font-size:13px;outline:none}
+select:focus,input[type=search]:focus{border-color:var(--accent)}
+input[type=search]{min-width:220px}
+
+main{max-width:1280px;margin:0 auto;padding:24px 22px 60px}
+section{margin-bottom:34px}
+
+/* ---------- headings ---------- */
+.sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.sec-head h2{font-size:19px}
+.sec-head .sub{color:var(--muted);font-size:12.5px}
+
+/* ---------- fleet overview ---------- */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:18px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.stat .k{color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+.stat .v{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.stat .s{color:var(--faint);font-size:12px;margin-top:3px}
+.host-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.host-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;
+  cursor:pointer;transition:border-color .15s,transform .1s;text-align:left;width:100%;color:inherit;font:inherit}
+.host-card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.host-card.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.host-card .hc-top{display:flex;align-items:center;gap:9px;margin-bottom:6px}
+.host-card .hc-name{font-weight:700;font-size:15px;word-break:break-all}
+.host-card .hc-os{color:var(--muted);font-size:12px;margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hc-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.chip{background:var(--card2);border-radius:20px;padding:2px 9px;font-size:11.5px;color:var(--muted)}
+.chip b{color:var(--text);font-weight:600}
+
+/* ---------- status ---------- */
+.dot{width:9px;height:9px;border-radius:50%;flex:none}
+.dot.ok{background:var(--ok);box-shadow:0 0 6px var(--ok)}
+.dot.warn{background:var(--warn);box-shadow:0 0 6px var(--warn)}
+.dot.crit{background:var(--crit);box-shadow:0 0 6px var(--crit)}
+.badge{display:inline-flex;align-items:center;gap:5px;border-radius:6px;padding:1.5px 8px;font-size:11px;
+  font-weight:600;letter-spacing:.3px;text-transform:uppercase}
+.badge.ok{color:var(--ok);background:var(--ok-bg)}
+.badge.warn{color:var(--warn);background:var(--warn-bg)}
+.badge.crit{color:var(--crit);background:var(--crit-bg)}
+.badge.muted{color:var(--muted);background:rgba(139,152,169,.12)}
+
+/* ---------- meters ---------- */
+.meter{background:#0b0f14;border:1px solid var(--border);border-radius:6px;height:8px;overflow:hidden;margin:4px 0}
+.meter-fill{height:100%;border-radius:5px;background:var(--ok);transition:width .4s ease}
+.meter-fill.warn{background:var(--warn)}
+.meter-fill.crit{background:var(--crit)}
+.meter-row{margin-bottom:10px}
+.meter-row .mr-label{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.meter-row .mr-label b{color:var(--text);font-weight:600}
+
+/* ---------- cards & grids ---------- */
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px}
+.card h3{font-size:14.5px;margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card h3 .spacer{margin-left:auto}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.kv{display:grid;grid-template-columns:minmax(120px,auto) 1fr;gap:6px 16px;font-size:13px}
+.kv dt{color:var(--muted)}
+.kv dd{word-break:break-word;font-variant-numeric:tabular-nums}
+.kv dd.mono{font-family:var(--mono);font-size:12.5px}
+
+/* ---------- tables ---------- */
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px}
+table{width:auto;min-width:100%;border-collapse:collapse;font-size:13px}
+thead th{position:sticky;top:0;background:var(--card2);color:var(--muted);text-align:left;
+  padding:9px 12px;font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;
+  user-select:none;white-space:nowrap;border-bottom:1px solid var(--border)}
+thead th:hover{color:var(--text)}
+thead th .arrow{font-size:10px;margin-left:4px}
+tbody td{padding:8px 12px;border-bottom:1px solid rgba(42,54,68,.5);vertical-align:top;word-break:break-word}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:rgba(79,140,255,.06)}
+td.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.tbl-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.tbl-toolbar .count{color:var(--muted);font-size:12.5px;margin-left:auto;white-space:nowrap}
+.btn{background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:8px;
+  padding:6px 12px;font-size:12.5px;cursor:pointer}
+.btn:hover{border-color:var(--accent);color:var(--accent2)}
+
+/* ---------- misc ---------- */
+.empty{color:var(--muted);font-size:13px;padding:18px;text-align:center;border:1px dashed var(--border);
+  border-radius:10px}
+.err-panel{border:1px solid rgba(248,81,73,.4);background:var(--crit-bg);border-radius:10px;padding:14px 16px}
+.err-panel ul{margin:8px 0 0 18px}
+.err-panel li{margin-bottom:4px;font-size:12.5px}
+details.coverage{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 16px}
+details.coverage summary{cursor:pointer;color:var(--muted);font-size:13px;font-weight:600}
+details.coverage table{margin-top:10px}
+.note{color:var(--faint);font-size:12px;margin-top:6px}
+.footer{max-width:1280px;margin:0 auto;padding:18px 22px 40px;color:var(--faint);font-size:12px;
+  border-top:1px solid var(--border)}
+.fleetbar{display:flex;height:26px;border-radius:8px;overflow:hidden;border:1px solid var(--border);margin-top:4px}
+.fleetbar div{display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;color:#fff}
+.host-anchor{scroll-margin-top:80px}
+@media (max-width:700px){
+  .topbar{padding:10px 14px}
+  main{padding:16px 12px 40px}
+  input[type=search]{min-width:140px}
+}
+@media print{
+  .topbar,.tbl-toolbar,.host-card{display:none}
+  body{background:#fff;color:#000}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand"><span class="logo">S</span> <span id="brandTitle"></span></div>
+  <div class="topbar-meta" id="generatedMeta"></div>
+  <div class="controls">
+    <label class="sel-label" for="hostSelect">Host</label>
+    <select id="hostSelect"></select>
+  </div>
+</header>
+
+<main>
+  <section id="fleetSection">
+    <div class="sec-head">
+      <h2>Fleet Overview</h2>
+      <span class="sub" id="fleetSub"></span>
+    </div>
+    <div class="stat-grid" id="statGrid"></div>
+    <div class="host-grid" id="hostGrid"></div>
+  </section>
+
+  <section id="hostDetail" class="host-anchor">
+    <div class="sec-head">
+      <h2 id="detailTitle">Host Detail</h2>
+      <span class="sub" id="detailSub"></span>
+    </div>
+    <div id="detailBody"></div>
+  </section>
+</main>
+
+<div class="footer">
+  Generated by SysAnalyzer &middot; <span id="footerMeta"></span> &middot;
+  Self-contained report: all CSS, JavaScript and data are embedded; works fully offline.
+</div>
+
+<script type="application/json" id="report-data">{
+    "title":  "System Analysis Report",
+    "generatedUtc":  "2026-10-24T16:01:25Z",
+    "hosts":  [
+                  {
+                      "ComputerName":  "ARIEL",
+                      "Timestamp":  {
+                                        "value":  "\/Date(1792857681420)\/",
+                                        "DisplayHint":  2,
+                                        "DateTime":  "24 October 2026 17:01:21"
+                                    },
+                      "Status":  "Success",
+                      "Summary":  {
+                                      "ComputerName":  "ARIEL",
+                                      "Domain":  "WORKGROUP",
+                                      "Workgroup":  "WORKGROUP",
+                                      "Manufacturer":  "HP",
+                                      "Model":  "HP EliteBook 840 G3",
+                                      "SerialNumber":  "5CG9052291",
+                                      "BIOSVersion":  "N75 Ver. 01.33",
+                                      "BIOSReleaseDate":  "\/Date(1531785600000)\/",
+                                      "OSName":  "Microsoft Windows 11 Enterprise",
+                                      "OSVersion":  "10.0.22000",
+                                      "OSBuildNumber":  "22000",
+                                      "OSArchitecture":  "64-bit",
+                                      "RegisteredUser":  "Phoenix",
+                                      "SystemDrive":  "C:",
+                                      "InstallDate":  "\/Date(1665254217000)\/",
+                                      "LastBootUpTime":  "\/Date(1792854585500)\/",
+                                      "LocalDateTime":  "\/Date(1792857681717)\/",
+                                      "Uptime":  "0.00:51:36",
+                                      "TimeZone":  "(UTC+00:00) Dublin, Edinburgh, Lisbon, London",
+                                      "LogonUser":  "ARIEL\\Phoenix"
+                                  },
+                      "Cpu":  {
+                                  "TotalCores":  2,
+                                  "TotalLogicalProcessors":  4,
+                                  "UtilizationPercent":  10,
+                                  "Processors":  [
+                                                     {
+                                                         "Name":  "Intel(R) Core(TM) i7-6600U CPU @ 2.60GHz",
+                                                         "Manufacturer":  "GenuineIntel",
+                                                         "MaxClockSpeedMHz":  2808,
+                                                         "CurrentClockSpeedMHz":  2607,
+                                                         "NumberOfCores":  2,
+                                                         "NumberOfLogicalProcessors":  4,
+                                                         "L2CacheSizeKB":  512,
+                                                         "L3CacheSizeKB":  4096,
+                                                         "SocketDesignation":  "U3E1",
+                                                         "Architecture":  "Intel64 Family 6 Model 78 Stepping 3"
+                                                     }
+                                                 ]
+                              },
+                      "Memory":  {
+                                     "TotalBytes":  34234527744,
+                                     "AvailableBytes":  25620701184,
+                                     "UsedPercent":  25.2,
+                                     "Modules":  [
+                                                     {
+                                                         "DeviceLocator":  "Bottom-Slot 1(left)",
+                                                         "BankLabel":  "ChannelA",
+                                                         "CapacityBytes":  17179869184,
+                                                         "SpeedMHz":  2133,
+                                                         "Manufacturer":  "Hynix/Hyundai",
+                                                         "PartNumber":  "HMA82GS6CJR8N-VK    ",
+                                                         "SerialNumber":  "336B8F8B",
+                                                         "FormFactor":  12
+                                                     },
+                                                     {
+                                                         "DeviceLocator":  "Bottom-Slot 2(right)",
+                                                         "BankLabel":  "ChannelB",
+                                                         "CapacityBytes":  17179869184,
+                                                         "SpeedMHz":  2133,
+                                                         "Manufacturer":  "Hynix/Hyundai",
+                                                         "PartNumber":  "HMA82GS6CJR8N-VK    ",
+                                                         "SerialNumber":  "336B8F8E",
+                                                         "FormFactor":  12
+                                                     }
+                                                 ],
+                                     "PageFiles":  [
+                                                       {
+                                                           "Name":  "C:\\pagefile.sys",
+                                                           "AllocatedSizeMB":  1091,
+                                                           "CurrentUsageMB":  0,
+                                                           "PeakUsageMB":  1
+                                                       }
+                                                   ]
+                                 },
+                      "Storage":  {
+                                      "Volumes":  [
+                                                      {
+                                                          "DeviceID":  "C:",
+                                                          "VolumeName":  "WinToHDD",
+                                                          "FileSystem":  "NTFS",
+                                                          "SizeBytes":  512104591360,
+                                                          "FreeBytes":  1052975104,
+                                                          "UsedPercent":  99.8
+                                                      }
+                                                  ],
+                                      "PhysicalDisks":  [
+                                                            {
+                                                                "Index":  0,
+                                                                "Model":  "MTFDDAV512TBN-1AR1ZABHA",
+                                                                "InterfaceType":  "IDE",
+                                                                "MediaType":  "Fixed hard disk media",
+                                                                "SizeBytes":  512105932800,
+                                                                "Partitions":  1,
+                                                                "SerialNumber":  "      UGXVQ01N4BE1WP"
+                                                            }
+                                                        ],
+                                      "TotalBytes":  512104591360,
+                                      "FreeBytes":  1052975104
+                                  },
+                      "Applications":  [
+                                           {
+                                               "Name":  "StarVPN",
+                                               "Version":  "1.1.40",
+                                               "Publisher":  "StarVPN",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  203.8,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "\"C:\\Program Files\\StarVPN\\Uninstall StarVPN.exe\" /allusers"
+                                           },
+                                           {
+                                               "Name":  "Bang \u0026 Olufsen Audio",
+                                               "Version":  "9.0.232.90",
+                                               "Publisher":  "Conexant",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  81.7,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "C:\\Program Files\\CONEXANT\\CNXT_AUDIO_HDA\\UIU64a.exe -U -G -Icisstrt.inf"
+                                           },
+                                           {
+                                               "Name":  "EPSON WF-2930 Series Printer Uninstall",
+                                               "Version":  "",
+                                               "Publisher":  "Seiko Epson Corporation",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  0,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "C:\\Windows\\system32\\spool\\DRIVERS\\x64\\3\\E1YINSBFE.EXE /R /APD /P:\"EPSON WF-2930 Series\""
+                                           },
+                                           {
+                                               "Name":  "Audio Controls Application",
+                                               "Version":  "3.0.54.22",
+                                               "Publisher":  "Conexant Systems",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "C:\\Program Files\\Conexant\\SA3\\HP-NB-AIO",
+                                               "SizeMB":  28.6,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "C:\\Program Files\\Conexant\\SA3\\HP-NB-AIO\\SETUP64.EXE -U -ISA3 -SWTM=\"HDAudioAPI-D9A3021B-9BCE-458C-B667-9029C4EF4050,1801\""
+                                           },
+                                           {
+                                               "Name":  "Keychron-Assistant",
+                                               "Version":  "1.1.6",
+                                               "Publisher":  "keychron",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "\"C:\\Program Files\\Keychron-Assistant\"",
+                                               "SizeMB":  24.2,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "\"C:\\Program Files\\Keychron-Assistant\\uninstall.exe\""
+                                           },
+                                           {
+                                               "Name":  "McAfee",
+                                               "Version":  "1.40.161.1",
+                                               "Publisher":  "McAfee, LLC",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  326.8,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "\"C:\\Program Files\\McAfee\\wps\\1.40.161.1\\mc-update.exe\" /uninstall"
+                                           },
+                                           {
+                                               "Name":  "Microsoft SQL Server 2019 (64-bit)",
+                                               "Version":  "",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  0,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "\"C:\\Program Files\\Microsoft SQL Server\\150\\Setup Bootstrap\\SQL2019\\x64\\SetupARP.exe\""
+                                           },
+                                           {
+                                               "Name":  "Microsoft Visual Studio 2010 Tools for Office Runtime (x64)",
+                                               "Version":  "10.0.60910",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "c:\\Program Files\\Common Files\\Microsoft Shared\\VSTO\\10.0\\",
+                                               "SizeMB":  0,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "\"c:\\Program Files\\Common Files\\Microsoft Shared\\VSTO\\10.0\\Microsoft Visual Studio 2010 Tools for Office Runtime (x64)\\install.exe\""
+                                           },
+                                           {
+                                               "Name":  "MatchWare MindView 9.0",
+                                               "Version":  "9.0.41114.3",
+                                               "Publisher":  "MatchWare",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "C:\\Program Files\\MatchWare\\MindView 9.0\\",
+                                               "SizeMB":  1239.1,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "C:\\ProgramData\\Caphyon\\Advanced Installer\\{65D563CA-6DEC-4799-B63C-C152D561B3E4}\\mindview_b9.0.41114.exe /i {65D563CA-6DEC-4799-B63C-C152D561B3E4} AI_UNINSTALLER_CTP=1"
+                                           },
+                                           {
+                                               "Name":  "Microsoft Office Professional Plus 2024 - en-us",
+                                               "Version":  "16.0.18827.20140",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "C:\\Program Files\\Microsoft Office",
+                                               "SizeMB":  0,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "\"C:\\Program Files\\Common Files\\Microsoft Shared\\ClickToRun\\OfficeClickToRun.exe\" scenario=install scenariosubtype=ARP sourcetype=None productstoremove=ProPlus2024Retail.16_en-us_x-none culture=en-us version.16=16.0"
+                                           },
+                                           {
+                                               "Name":  "Synaptics Pointing Device Driver",
+                                               "Version":  "19.0.19.65",
+                                               "Publisher":  "Synaptics Incorporated",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "C:\\Program Files\\Synaptics\\SynTP",
+                                               "SizeMB":  46.4,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "rundll32.exe \"C:\\Program Files\\Synaptics\\SynTP\\SynISDLL.dll\",standAloneUninstall"
+                                           },
+                                           {
+                                               "Name":  "Tesseract-OCR - open source OCR engine",
+                                               "Version":  "5.4.0.20240606",
+                                               "Publisher":  "Tesseract-OCR community",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  0,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "C:\\Program Files\\Tesseract-OCR\\tesseract-uninstall.exe"
+                                           },
+                                           {
+                                               "Name":  "WinRAR 6.11 (64-bit)",
+                                               "Version":  "6.11.0",
+                                               "Publisher":  "win.rar GmbH",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "C:\\Program Files\\WinRAR\\",
+                                               "SizeMB":  0,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "C:\\Program Files\\WinRAR\\Uninstall.exe"
+                                           },
+                                           {
+                                               "Name":  "Node.js",
+                                               "Version":  "22.20.0",
+                                               "Publisher":  "Node.js Foundation",
+                                               "InstallDate":  "20251010",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  98.7,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "MsiExec.exe /I{0463EF6C-7AE0-4657-970D-FD4634A98A35}"
+                                           },
+                                           {
+                                               "Name":  "Microsoft ODBC Driver 18 for SQL Server",
+                                               "Version":  "18.1.1.1",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "20230821",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  4.2,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "MsiExec.exe /I{14594907-E6B1-48D7-BF8A-B82D53DE2EE7}"
+                                           },
+                                           {
+                                               "Name":  "Microsoft SQL Server 2019 Setup (English)",
+                                               "Version":  "15.0.4013.40",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "20230821",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  184.2,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "MsiExec.exe /X{17DCED0E-5B27-453A-B2B4-E487B869B28A}"
+                                           },
+                                           {
+                                               "Name":  "Microsoft Visual C++ 2010  x64 Redistributable - 10.0.40219",
+                                               "Version":  "10.0.40219",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "20250217",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  13.9,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "MsiExec.exe /X{1D8E6291-B0D5-35EC-8441-6616F567A0F7}"
+                                           },
+                                           {
+                                               "Name":  "Microsoft VSS Writer for SQL Server 2019",
+                                               "Version":  "15.0.2000.5",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "20230821",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  1.8,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "MsiExec.exe /I{2C33F4D4-E9A5-4DE1-ACFE-3A13464E6703}"
+                                           },
+                                           {
+                                               "Name":  "Microsoft SQL Server 2019 T-SQL Language Service ",
+                                               "Version":  "15.0.2000.5",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "20230821",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  9.1,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "MsiExec.exe /I{31D27B41-A051-49D8-907A-62E0F4A2188C}"
+                                           },
+                                           {
+                                               "Name":  "Google Earth Pro",
+                                               "Version":  "7.3.7.1327",
+                                               "Publisher":  "Google",
+                                               "InstallDate":  "20260910",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  214,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "MsiExec.exe /I{3D62248F-DE98-4CEB-A1D9-E69073E085D3}"
+                                           },
+                                           {
+                                               "Name":  "psqlODBC_x64",
+                                               "Version":  "09.06.0504",
+                                               "Publisher":  "PostgreSQL Global Development Group",
+                                               "InstallDate":  "20221022",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  7.7,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "MsiExec.exe /I{3F8971B0-061B-4163-9D3F-EA94151B2FCF}"
+                                           },
+                                           {
+                                               "Name":  "Azure Data Studio",
+                                               "Version":  "1.37.0",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "20230821",
+                                               "InstallLocation":  "C:\\Program Files\\Azure Data Studio\\",
+                                               "SizeMB":  568.8,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "\"C:\\Program Files\\Azure Data Studio\\unins000.exe\""
+                                           },
+                                           {
+                                               "Name":  "Google Drive",
+                                               "Version":  "133.0.2.0",
+                                               "Publisher":  "Google LLC",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "C:\\Program Files\\Google\\Drive File Stream\\133.0.2.0\\GoogleDriveFS.exe",
+                                               "SizeMB":  0,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "C:\\Program Files\\Google\\Drive File Stream\\133.0.2.0\\uninstall.exe"
+                                           },
+                                           {
+                                               "Name":  "Amazon Redshift ODBC Driver 64-bit",
+                                               "Version":  "1.3.7.1000",
+                                               "Publisher":  "Amazon Corporate LLC",
+                                               "InstallDate":  "20221022",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  36.3,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "MsiExec.exe /X{788C401A-726B-4CE7-8BC2-89FD7967A6ED}"
+                                           },
+                                           {
+                                               "Name":  "Eclipse Temurin JDK with Hotspot 21.0.7+6 (x64)",
+                                               "Version":  "21.0.7.6",
+                                               "Publisher":  "Eclipse Adoptium",
+                                               "InstallDate":  "20250516",
+                                               "InstallLocation":  "C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.7.6-hotspot\\",
+                                               "SizeMB":  328.4,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "MsiExec.exe /I{7F8D17DD-98B6-4A5D-87E7-E0B732691B8B}"
+                                           },
+                                           {
+                                               "Name":  "Microsoft ODBC Driver 17 for SQL Server",
+                                               "Version":  "17.7.2.1",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "20230821",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  7,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "MsiExec.exe /I{853997DA-6FCB-4FB9-918E-E0FF881FAF65}"
+                                           },
+                                           {
+                                               "Name":  "EpsonNet Print",
+                                               "Version":  "3.2.0.0",
+                                               "Publisher":  "Seiko Epson Corporation",
+                                               "InstallDate":  "20250913",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  19,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "MsiExec.exe /X{92DCE546-2A73-4BCF-ADA5-0E6BD95E6B61}"
+                                           },
+                                           {
+                                               "Name":  "Microsoft System CLR Types for SQL Server 2019 CTP3.0",
+                                               "Version":  "15.0.1600.8",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "20240929",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  2.3,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "MsiExec.exe /I{95F92233-C25F-4722-B43B-3F736459DA3F}"
+                                           },
+                                           {
+                                               "Name":  "Microsoft OLE DB Driver for SQL Server",
+                                               "Version":  "18.5.0.0",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "20230821",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  8.3,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "MsiExec.exe /I{9D6F8754-28E9-4940-B319-3FC8588CF18F}"
+                                           },
+                                           {
+                                               "Name":  "Microsoft SQL Server 2012 Native Client ",
+                                               "Version":  "11.4.7462.6",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "20230821",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  7.2,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "MsiExec.exe /I{9D93D367-A2CC-4378-BD63-79EF3FE76C78}"
+                                           },
+                                           {
+                                               "Name":  "Eclipse Temurin JDK with Hotspot 21.0.4+7 (x64)",
+                                               "Version":  "21.0.4.7",
+                                               "Publisher":  "Eclipse Adoptium",
+                                               "InstallDate":  "20240921",
+                                               "InstallLocation":  "C:\\Users\\Phoenix\\AppData\\Local\\Programs\\Eclipse Adoptium\\jdk-21.0.4.7-hotspot\\",
+                                               "SizeMB":  327.3,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "MsiExec.exe /I{A3EEC03E-59ED-4755-9CE1-3295E34AB90B}"
+                                           },
+                                           {
+                                               "Name":  "Microsoft Teams Meeting Add-in for Microsoft Office",
+                                               "Version":  "1.24.28402",
+                                               "Publisher":  "Microsoft",
+                                               "InstallDate":  "20241119",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  31.8,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "MsiExec.exe /I{A7AB73A3-CB10-4AA5-9D38-6AEFFBDE4C91}"
+                                           },
+                                           {
+                                               "Name":  "Active Directory Authentication Library for SQL Server",
+                                               "Version":  "14.0.3015.40",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "20240929",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  1.8,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "MsiExec.exe /I{AA4514EC-4DB3-43F9-9FB8-C3C0C720D1D6}"
+                                           },
+                                           {
+                                               "Name":  "Microsoft Update Health Tools",
+                                               "Version":  "4.75.0.0",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "20231218",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  1,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "MsiExec.exe /X{ACF2602E-BD31-4BE5-AC03-9C8FDB638ADA}"
+                                           },
+                                           {
+                                               "Name":  "Easy Connection to Screen",
+                                               "Version":  "6.5.16",
+                                               "Publisher":  "Samsung",
+                                               "InstallDate":  "20260701",
+                                               "InstallLocation":  "C:\\Program Files\\Samsung\\Easy Connection to Screen\\",
+                                               "SizeMB":  389.1,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "MsiExec.exe /X{C1B6EB6F-0097-4D1E-9931-D82A1395C531}"
+                                           },
+                                           {
+                                               "Name":  "Master PDF Editor 5",
+                                               "Version":  "5.9.88",
+                                               "Publisher":  "Code Industry",
+                                               "InstallDate":  "20250325",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  128.6,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "MsiExec.exe /X{CFD009E9-4758-4BA3-A85F-882EE30DB719}"
+                                           },
+                                           {
+                                               "Name":  "FileSearch Pro",
+                                               "Version":  "2.6.0",
+                                               "Publisher":  "Spaqi Tech",
+                                               "InstallDate":  "20260919",
+                                               "InstallLocation":  "C:\\Program Files\\FileSearch Pro\\",
+                                               "SizeMB":  172.5,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "MsiExec.exe /I{E92A1C5C-6A0C-4EBF-85F5-B0B999341FAE}"
+                                           },
+                                           {
+                                               "Name":  "Flip PDF Plus Corporate",
+                                               "Version":  "7.6.5",
+                                               "Publisher":  "Flip PDF",
+                                               "InstallDate":  "20250408",
+                                               "InstallLocation":  "C:\\Program Files\\Flip PDF Plus Corporate\\",
+                                               "SizeMB":  539,
+                                               "Source":  "Machine",
+                                               "UninstallString":  "MsiExec.exe /I{FD410D0A-77CF-4D5B-9C6A-5B605CE79346}"
+                                           },
+                                           {
+                                               "Name":  "AI Text To Image Generator Pro",
+                                               "Version":  "1.25",
+                                               "Publisher":  "bytesweavers.tech",
+                                               "InstallDate":  "20260729",
+                                               "InstallLocation":  "C:\\Users\\Phoenix\\AppData\\Local\\",
+                                               "SizeMB":  11.1,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\Users\\Phoenix\\AppData\\Local\\unins004.exe\""
+                                           },
+                                           {
+                                               "Name":  "Citrix Workspace 2402",
+                                               "Version":  "24.2.3001.9",
+                                               "Publisher":  "Citrix Systems, Inc.",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "C:\\PROGRAM FILES (X86)\\CITRIX\\",
+                                               "SizeMB":  584.7,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\Program Files (x86)\\Citrix\\Citrix Workspace 2402\\bootstrapperhelper.exe\" /uninstall /cleanup"
+                                           },
+                                           {
+                                               "Name":  "DVBViewer Pro",
+                                               "Version":  "7.3.1.0",
+                                               "Publisher":  "CM\u0026V",
+                                               "InstallDate":  "20250318",
+                                               "InstallLocation":  "C:\\Program Files (x86)\\DVBViewer\\",
+                                               "SizeMB":  34.1,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\Program Files (x86)\\DVBViewer\\unins000.exe\""
+                                           },
+                                           {
+                                               "Name":  "Epson Scan 2",
+                                               "Version":  "",
+                                               "Publisher":  "Seiko Epson Corporation",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  0,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "C:\\Program Files (x86)\\epson\\Epson Scan 2\\Setup\\setup.exe /R"
+                                           },
+                                           {
+                                               "Name":  "Glary Utilities 6.28",
+                                               "Version":  "6.28.0.32",
+                                               "Publisher":  "Glarysoft Ltd",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  0,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "C:\\Program Files (x86)\\Glary Utilities\\uninst.exe"
+                                           },
+                                           {
+                                               "Name":  "Google Maps Downloader 8.883",
+                                               "Version":  "",
+                                               "Publisher":  "allmapsoft.com",
+                                               "InstallDate":  "20251106",
+                                               "InstallLocation":  "C:\\Applications\\AllMapSoft Google Maps Downloader 8.883\\gmd\\",
+                                               "SizeMB":  0,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\Applications\\AllMapSoft Google Maps Downloader 8.883\\gmd\\unins000.exe\""
+                                           },
+                                           {
+                                               "Name":  "Hard Disk Low Level Format Tool 4.40",
+                                               "Version":  "",
+                                               "Publisher":  "HDDGURU",
+                                               "InstallDate":  "20250708",
+                                               "InstallLocation":  "C:\\Program Files (x86)\\HDDGURU LLF Tool\\",
+                                               "SizeMB":  2.6,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\Program Files (x86)\\HDDGURU LLF Tool\\unins000.exe\""
+                                           },
+                                           {
+                                               "Name":  "K-Lite Codec Pack 19.0.5 Standard",
+                                               "Version":  "19.0.5",
+                                               "Publisher":  "KLCP",
+                                               "InstallDate":  "20250701",
+                                               "InstallLocation":  "C:\\Program Files (x86)\\K-Lite Codec Pack\\",
+                                               "SizeMB":  74.5,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\Program Files (x86)\\K-Lite Codec Pack\\unins000.exe\""
+                                           },
+                                           {
+                                               "Name":  "MassTube 21.3.0.182",
+                                               "Version":  "21.3.0.182",
+                                               "Publisher":  "RePack 9649",
+                                               "InstallDate":  "20251215",
+                                               "InstallLocation":  "C:\\Program Files (x86)\\MassTube\\",
+                                               "SizeMB":  64.5,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\Program Files (x86)\\MassTube\\unins000.exe\""
+                                           },
+                                           {
+                                               "Name":  "TeamViewer",
+                                               "Version":  "15.67.5",
+                                               "Publisher":  "TeamViewer",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "C:\\Program Files (x86)\\TeamViewer",
+                                               "SizeMB":  0,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\Program Files (x86)\\TeamViewer\\uninstall.exe\""
+                                           },
+                                           {
+                                               "Name":  "VeraCrypt",
+                                               "Version":  "1.26.24",
+                                               "Publisher":  "AM Crypto",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  0,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\Program Files\\VeraCrypt\\VeraCrypt Setup.exe\" /u"
+                                           },
+                                           {
+                                               "Name":  "VLC media player",
+                                               "Version":  "3.0.24",
+                                               "Publisher":  "VideoLAN",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "C:\\Program Files (x86)\\VideoLAN\\VLC",
+                                               "SizeMB":  0,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\Program Files (x86)\\VideoLAN\\VLC\\uninstall.exe\""
+                                           },
+                                           {
+                                               "Name":  "Winamp",
+                                               "Version":  "5.92.0",
+                                               "Publisher":  "Winamp SA",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "C:\\Program Files (x86)\\Winamp",
+                                               "SizeMB":  0,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\Program Files (x86)\\Winamp\\UninstWA.exe\""
+                                           },
+                                           {
+                                               "Name":  "YT Downloader 9",
+                                               "Version":  "",
+                                               "Publisher":  "YT Helper",
+                                               "InstallDate":  "20251116",
+                                               "InstallLocation":  "C:\\Program Files (x86)\\YT Helper\\YT Downloader\\",
+                                               "SizeMB":  143.7,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\Program Files (x86)\\YT Helper\\YT Downloader\\unins000.exe\""
+                                           },
+                                           {
+                                               "Name":  "Microsoft Visual C++ 2013 Redistributable (x64) - 12.0.40664",
+                                               "Version":  "12.0.40664.0",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  20.6,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\ProgramData\\Package Cache\\{042d26ef-3dbe-4c25-95d3-4c1b11b235a7}\\vcredist_x64.exe\"  /uninstall"
+                                           },
+                                           {
+                                               "Name":  "Epson Event Manager",
+                                               "Version":  "3.11.77",
+                                               "Publisher":  "Seiko Epson Corporation",
+                                               "InstallDate":  "20240625",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  49.9,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "MsiExec.exe /X{067039C9-A41C-42F5-9571-B06E0700AAA4}"
+                                           },
+                                           {
+                                               "Name":  "Microsoft SQL Server Management Studio - 18.12.1",
+                                               "Version":  "15.0.18424.0",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  2817,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\ProgramData\\Package Cache\\{09a17706-821c-4c52-8fcd-ace4783362bb}\\SSMS-Setup-ENU.exe\"  /uninstall"
+                                           },
+                                           {
+                                               "Name":  "Microsoft Visual C++ 2015-2022 Redistributable (x86) - 14.44.35211",
+                                               "Version":  "14.44.35211.0",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  18.2,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\ProgramData\\Package Cache\\{0b5169e3-39da-4313-808e-1f9c0407f3bf}\\VC_redist.x86.exe\"  /uninstall"
+                                           },
+                                           {
+                                               "Name":  "Epson FAX Utility",
+                                               "Version":  "4.04.02.04",
+                                               "Publisher":  "Seiko Epson Corporation",
+                                               "InstallDate":  "20250913",
+                                               "InstallLocation":  "C:\\Program Files (x86)\\Epson Software\\FAX Utility",
+                                               "SizeMB":  0,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\Program Files (x86)\\InstallShield Installation Information\\{0CBE6C93-CB2E-4378-91EE-12BE6D4E2E4A}\\setup.exe\" -runfromtemp -l0x0409  -removeonly"
+                                           },
+                                           {
+                                               "Name":  "FonePaw Video Converter Ultimate 9.3.0",
+                                               "Version":  "9.3.0",
+                                               "Publisher":  "FonePaw",
+                                               "InstallDate":  "20250706",
+                                               "InstallLocation":  "C:\\Program Files\\FonePaw\\FonePaw Video Converter Ultimate\\",
+                                               "SizeMB":  215.7,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\Program Files\\FonePaw\\FonePaw Video Converter Ultimate\\unins000.exe\""
+                                           },
+                                           {
+                                               "Name":  "Office Timeline",
+                                               "Version":  "8.4.0",
+                                               "Publisher":  "Office Timeline",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  352.2,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\ProgramData\\Package Cache\\{12602f7d-d403-4dfa-b753-ae897eaac935}\\OfficeTimeline.exe\"  /uninstall"
+                                           },
+                                           {
+                                               "Name":  "Epson Photo+",
+                                               "Version":  "3.8.2.0",
+                                               "Publisher":  "Seiko Epson Corporation",
+                                               "InstallDate":  "20240625",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  50.3,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "MsiExec.exe /I{12DE33D1-6FE8-42E1-B54B-6114806BBA40}"
+                                           },
+                                           {
+                                               "Name":  "Armored Client",
+                                               "Version":  "7.5.0.11311",
+                                               "Publisher":  "SentryBay",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "C:\\Program Files (x86)\\SentryBay\\Armored Client",
+                                               "SizeMB":  0,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "C:\\Program Files (x86)\\SentryBay\\Armored Client\\uninstall.exe /interactive"
+                                           },
+                                           {
+                                               "Name":  "Microsoft Windows Desktop Runtime - 8.0.31 (x64)",
+                                               "Version":  "8.0.31.36421",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  217.1,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\ProgramData\\Package Cache\\{208fff39-3440-44c6-b473-38136ba594bf}\\windowsdesktop-runtime-8.0.31-win-x64.exe\"  /uninstall"
+                                           },
+                                           {
+                                               "Name":  "WebAdvisor by McAfee",
+                                               "Version":  "4.1.2.130",
+                                               "Publisher":  "McAfee, LLC",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "C:\\Program Files\\McAfee\\WebAdvisor",
+                                               "SizeMB":  83.4,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "C:\\Program Files\\McAfee\\WebAdvisor\\Uninstaller.exe"
+                                           },
+                                           {
+                                               "Name":  "Photo Focus",
+                                               "Version":  "4.3.8577.22199",
+                                               "Publisher":  "inPixio",
+                                               "InstallDate":  "20240506",
+                                               "InstallLocation":  "C:\\Program Files (x86)\\inPixio\\Photo Focus\\",
+                                               "SizeMB":  410.2,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "MsiExec.exe /I{4EA48818-0E93-427E-8042-1C5A0D7E9275}"
+                                           },
+                                           {
+                                               "Name":  "gmd_setup",
+                                               "Version":  "1.0.0.0",
+                                               "Publisher":  "Repack",
+                                               "InstallDate":  "20251106",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  25.5,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "MsiExec.exe /I{558C662F-2EFD-4816-9672-E493EE123BB5}"
+                                           },
+                                           {
+                                               "Name":  "Browser for SQL Server 2019",
+                                               "Version":  "15.0.2000.5",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "20230821",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  11,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "MsiExec.exe /X{5E366957-8D78-4BB5-A790-96F97A9766BD}"
+                                           },
+                                           {
+                                               "Name":  "MassTube 2026 v21.0.2.164",
+                                               "Version":  "21.0.2.164",
+                                               "Publisher":  "Havy Alegria",
+                                               "InstallDate":  "20250925",
+                                               "InstallLocation":  "C:\\Programs\\MassTube\\",
+                                               "SizeMB":  66.2,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\Programs\\MassTube\\unins000.exe\""
+                                           },
+                                           {
+                                               "Name":  "CamView64 version 2.6.3",
+                                               "Version":  "2.6.3",
+                                               "Publisher":  "F\u0026T Soft",
+                                               "InstallDate":  "20251207",
+                                               "InstallLocation":  "C:\\Program Files\\CamView64\\",
+                                               "SizeMB":  4.1,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\Program Files\\CamView64\\unins000.exe\""
+                                           },
+                                           {
+                                               "Name":  "geid_setup",
+                                               "Version":  "1.0.0.0",
+                                               "Publisher":  "Repack",
+                                               "InstallDate":  "20251106",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  25,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "MsiExec.exe /I{707A8C8D-18F2-48B0-A54A-81905F80A1E2}"
+                                           },
+                                           {
+                                               "Name":  "Epson Software Updater",
+                                               "Version":  "4.6.7",
+                                               "Publisher":  "Seiko Epson Corporation",
+                                               "InstallDate":  "20240625",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  9.1,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "MsiExec.exe /X{711E8536-AB71-4455-A6C4-357FDBBEBF91}"
+                                           },
+                                           {
+                                               "Name":  "Olympia Logo Creation",
+                                               "Version":  "1.7.7.45",
+                                               "Publisher":  "Olympia",
+                                               "InstallDate":  "20241102",
+                                               "InstallLocation":  "C:\\Program Files (x86)\\Olympia Logo Creation\\",
+                                               "SizeMB":  910.2,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "MsiExec.exe /I{7D70B118-2AC1-4FA0-B8EE-41F78FD8EC2F}"
+                                           },
+                                           {
+                                               "Name":  "Microsoft Edge",
+                                               "Version":  "156.0.4314.42",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "20261023",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  2833.1,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "MsiExec.exe /X{8D35A7FC-355C-3F94-80C8-FEAFC5298086}"
+                                           },
+                                           {
+                                               "Name":  "Epson ScanSmart",
+                                               "Version":  "3.7.17",
+                                               "Publisher":  "Seiko Epson Corporation",
+                                               "InstallDate":  "20250516",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  116.9,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "MsiExec.exe /X{8D3E35BD-10F6-42A9-8F4D-F9BE5F51D477}"
+                                           },
+                                           {
+                                               "Name":  "Microsoft Office FrontPage 2003",
+                                               "Version":  "11.0.5614.0",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "20241006",
+                                               "InstallLocation":  "C:\\Program Files (x86)\\Microsoft Office\\",
+                                               "SizeMB":  241.2,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "MsiExec.exe /I{91170409-6000-11D3-8CFE-0150048383C9}"
+                                           },
+                                           {
+                                               "Name":  "Microsoft Visual C++ v14 Redistributable (x64) - 14.50.35719",
+                                               "Version":  "14.50.35719.0",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  20.7,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\ProgramData\\Package Cache\\{91ee571b-0e8a-4c65-9eaf-2e2f5fc60c00}\\VC_redist.x64.exe\"  /uninstall"
+                                           },
+                                           {
+                                               "Name":  "Prompt to Picture AI version 1.0.2",
+                                               "Version":  "1.0.2",
+                                               "Publisher":  "Manxlr",
+                                               "InstallDate":  "20260910",
+                                               "InstallLocation":  "C:\\Program Files\\Prompt to Picture AI\\",
+                                               "SizeMB":  5164.1,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\Program Files\\Prompt to Picture AI\\unins000.exe\""
+                                           },
+                                           {
+                                               "Name":  "Microsoft Visual C++ 2013 Redistributable (x86) - 12.0.40664",
+                                               "Version":  "12.0.40664.0",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  17.2,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\ProgramData\\Package Cache\\{9dff3540-fc85-4ed5-ac84-9e3c7fd8bece}\\vcredist_x86.exe\"  /uninstall"
+                                           },
+                                           {
+                                               "Name":  "Microsoft Power BI Report Server",
+                                               "Version":  "1.21.9032.4573",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  218.2,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\ProgramData\\Package Cache\\{9f4b342e-c48f-4b3a-a4ff-efa75b773f08}\\PowerBIReportServer.exe\" /modify"
+                                           },
+                                           {
+                                               "Name":  "Aiseesoft Video Converter Ultimate 11.0.10",
+                                               "Version":  "11.0.10",
+                                               "Publisher":  "Aiseesoft Studio",
+                                               "InstallDate":  "20260620",
+                                               "InstallLocation":  "C:\\Program Files\\Aiseesoft Studio\\Aiseesoft Video Converter Ultimate\\",
+                                               "SizeMB":  400.5,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\Program Files\\Aiseesoft Studio\\Aiseesoft Video Converter Ultimate\\unins000.exe\""
+                                           },
+                                           {
+                                               "Name":  "Python Launcher",
+                                               "Version":  "3.11.2150.0",
+                                               "Publisher":  "Python Software Foundation",
+                                               "InstallDate":  "20230302",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  1.5,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "MsiExec.exe /X{C28EE783-FA9C-4E09-910E-181A4A28C29C}"
+                                           },
+                                           {
+                                               "Name":  "Fast Screen Recorder version 2.1.0.14",
+                                               "Version":  "2.1.0.14",
+                                               "Publisher":  "",
+                                               "InstallDate":  "20250908",
+                                               "InstallLocation":  "C:\\Program Files (x86)\\Fast Screen Recorder\\",
+                                               "SizeMB":  64.6,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\Program Files (x86)\\Fast Screen Recorder\\unins000.exe\""
+                                           },
+                                           {
+                                               "Name":  "Microsoft Windows Desktop Runtime - 8.0.11 (x86)",
+                                               "Version":  "8.0.11.34221",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  201.4,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\ProgramData\\Package Cache\\{d9626d2b-3366-49f8-9fad-7d080580b6b3}\\windowsdesktop-runtime-8.0.11-win-x86.exe\"  /uninstall"
+                                           },
+                                           {
+                                               "Name":  "REALTEK DTV USB DEVICE",
+                                               "Version":  "1.00.0000",
+                                               "Publisher":  "Realtek",
+                                               "InstallDate":  "20250316",
+                                               "InstallLocation":  "C:\\Program Files (x86)\\Realtek\\REALTEK DTV USB DEVICE",
+                                               "SizeMB":  0,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "C:\\Program Files (x86)\\InstallShield Installation Information\\{DDBB7C89-1A09-441E-AA0F-6AA465755C17}\\setup.exe -runfromtemp -l0x0009 -removeonly"
+                                           },
+                                           {
+                                               "Name":  "Epson Printer Connection Checker",
+                                               "Version":  "3.4.0.0",
+                                               "Publisher":  "Seiko Epson Corporation",
+                                               "InstallDate":  "20240625",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  14.4,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "MsiExec.exe /X{DE32F90E-1A29-4D74-BCF1-E7DDB25D713A}"
+                                           },
+                                           {
+                                               "Name":  "Microsoft PowerBI Desktop (x64)",
+                                               "Version":  "2.142.1277.0",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  3748.6,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\ProgramData\\Package Cache\\{e34ba40b-af78-4ea4-bb73-ed513b6549b5}\\PBIDesktopSetup_x64.exe\"  /uninstall"
+                                           },
+                                           {
+                                               "Name":  "EPSON Scan PDF Extensions",
+                                               "Version":  "1.03.02.01",
+                                               "Publisher":  "Seiko Epson Corporation",
+                                               "InstallDate":  "20240625",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  0.1,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "MsiExec.exe /X{E4C6B326-8218-4FC2-8B48-85A19DAB3AE4}"
+                                           },
+                                           {
+                                               "Name":  "Speech Analyzer 3.1.2.0",
+                                               "Version":  "3.1.2.0",
+                                               "Publisher":  "SIL International, Inc.",
+                                               "InstallDate":  "20241215",
+                                               "InstallLocation":  "C:\\Program Files (x86)\\SIL\\Speech Analyzer\\",
+                                               "SizeMB":  47.8,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\Program Files (x86)\\SIL\\Speech Analyzer\\unins000.exe\""
+                                           },
+                                           {
+                                               "Name":  "Microsoft Visual C++ 2010  x86 Redistributable - 10.0.40219",
+                                               "Version":  "10.0.40219",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "20250217",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  11.1,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "MsiExec.exe /X{F0C3E5D1-1ADE-321E-8167-68EF0DE699A5}"
+                                           },
+                                           {
+                                               "Name":  "Microsoft Visual Studio Tools for Applications 2017",
+                                               "Version":  "15.0.27520",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  19.2,
+                                               "Source":  "Machine (32-bit)",
+                                               "UninstallString":  "\"C:\\ProgramData\\Package Cache\\{f895a2f1-ae3f-4212-8af1-7fa1f8c212ea}\\vsta_setup.exe\"  /uninstall"
+                                           },
+                                           {
+                                               "Name":  "BitTorrent",
+                                               "Version":  "7.11.0.47391",
+                                               "Publisher":  "BitTorrent Limited",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "C:\\Users\\Phoenix\\AppData\\Roaming\\BitTorrent",
+                                               "SizeMB":  0,
+                                               "Source":  "User",
+                                               "UninstallString":  "\"C:\\Users\\Phoenix\\AppData\\Roaming\\BitTorrent\\BitTorrent.exe\" /UNINSTALL"
+                                           },
+                                           {
+                                               "Name":  "Microsoft Support and Recovery Assistant",
+                                               "Version":  "17.1.2352.0",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  0,
+                                               "Source":  "User",
+                                               "UninstallString":  "rundll32.exe dfshim.dll,ShArpMaintain Microsoft.Sara.application, Culture=neutral, PublicKeyToken=5661bd3e342e4e9f, processorArchitecture=msil"
+                                           },
+                                           {
+                                               "Name":  "WinSCP 6.5.3",
+                                               "Version":  "6.5.3",
+                                               "Publisher":  "Martin Prikryl",
+                                               "InstallDate":  "20251010",
+                                               "InstallLocation":  "C:\\Users\\Phoenix\\AppData\\Local\\Programs\\WinSCP\\",
+                                               "SizeMB":  97.8,
+                                               "Source":  "User",
+                                               "UninstallString":  "\"C:\\Users\\Phoenix\\AppData\\Local\\Programs\\WinSCP\\unins000.exe\""
+                                           },
+                                           {
+                                               "Name":  "Python 3.11.2 (64-bit)",
+                                               "Version":  "3.11.2150.0",
+                                               "Publisher":  "Python Software Foundation",
+                                               "InstallDate":  "",
+                                               "InstallLocation":  "",
+                                               "SizeMB":  141.1,
+                                               "Source":  "User",
+                                               "UninstallString":  "\"C:\\Users\\Phoenix\\AppData\\Local\\Package Cache\\{4d5f29cf-3d3f-455f-bd47-5a52fb830b25}\\python-3.11.2-amd64.exe\"  /uninstall"
+                                           },
+                                           {
+                                               "Name":  "Microsoft Visual Studio Code (User)",
+                                               "Version":  "1.138.0",
+                                               "Publisher":  "Microsoft Corporation",
+                                               "InstallDate":  "20260923",
+                                               "InstallLocation":  "C:\\Users\\Phoenix\\AppData\\Local\\Programs\\Microsoft VS Code\\",
+                                               "SizeMB":  1000.6,
+                                               "Source":  "User",
+                                               "UninstallString":  "\"C:\\Users\\Phoenix\\AppData\\Local\\Programs\\Microsoft VS Code\\unins000.exe\""
+                                           }
+                                       ],
+                      "Patches":  [
+                                      {
+                                          "Id":  "KB5046398",
+                                          "Description":  "Security Update",
+                                          "InstalledOn":  {
+                                                              "value":  "\/Date(1728514800000)\/",
+                                                              "DateTime":  "10 October 2024 00:00:00"
+                                                          },
+                                          "InstalledBy":  "NT AUTHORITY\\SYSTEM",
+                                          "Source":  "QFE",
+                                          "Result":  ""
+                                      },
+                                      {
+                                          "Id":  "KB5044280",
+                                          "Description":  "Security Update",
+                                          "InstalledOn":  {
+                                                              "value":  "\/Date(1728514800000)\/",
+                                                              "DateTime":  "10 October 2024 00:00:00"
+                                                          },
+                                          "InstalledBy":  "NT AUTHORITY\\SYSTEM",
+                                          "Source":  "QFE",
+                                          "Result":  ""
+                                      },
+                                      {
+                                          "Id":  "KB5044415",
+                                          "Description":  "Security Update",
+                                          "InstalledOn":  {
+                                                              "value":  "\/Date(1728514800000)\/",
+                                                              "DateTime":  "10 October 2024 00:00:00"
+                                                          },
+                                          "InstalledBy":  "NT AUTHORITY\\SYSTEM",
+                                          "Source":  "QFE",
+                                          "Result":  ""
+                                      },
+                                      {
+                                          "Id":  "KB5044032",
+                                          "Description":  "Update",
+                                          "InstalledOn":  {
+                                                              "value":  "\/Date(1728514800000)\/",
+                                                              "DateTime":  "10 October 2024 00:00:00"
+                                                          },
+                                          "InstalledBy":  "NT AUTHORITY\\SYSTEM",
+                                          "Source":  "QFE",
+                                          "Result":  ""
+                                      },
+                                      {
+                                          "Id":  "KB5011048",
+                                          "Description":  "Update",
+                                          "InstalledOn":  {
+                                                              "value":  "\/Date(1707264000000)\/",
+                                                              "DateTime":  "07 February 2024 00:00:00"
+                                                          },
+                                          "InstalledBy":  "NT AUTHORITY\\SYSTEM",
+                                          "Source":  "QFE",
+                                          "Result":  ""
+                                      },
+                                      {
+                                          "Id":  "KB5033912",
+                                          "Description":  "Update",
+                                          "InstalledOn":  {
+                                                              "value":  "\/Date(1706313600000)\/",
+                                                              "DateTime":  "27 January 2024 00:00:00"
+                                                          },
+                                          "InstalledBy":  "NT AUTHORITY\\SYSTEM",
+                                          "Source":  "QFE",
+                                          "Result":  ""
+                                      },
+                                      {
+                                          "Id":  "KB5012170",
+                                          "Description":  "Security Update",
+                                          "InstalledOn":  {
+                                                              "value":  "\/Date(1666393200000)\/",
+                                                              "DateTime":  "22 October 2022 00:00:00"
+                                                          },
+                                          "InstalledBy":  "NT AUTHORITY\\SYSTEM",
+                                          "Source":  "QFE",
+                                          "Result":  ""
+                                      },
+                                      {
+                                          "Id":  "KB5017573",
+                                          "Description":  "Update",
+                                          "InstalledOn":  {
+                                                              "value":  "\/Date(1665183600000)\/",
+                                                              "DateTime":  "08 October 2022 00:00:00"
+                                                          },
+                                          "InstalledBy":  "NT AUTHORITY\\SYSTEM",
+                                          "Source":  "QFE",
+                                          "Result":  ""
+                                      }
+                                  ],
+                      "UpdateHistory":  [
+
+                                        ],
+                      "Coverage":  {
+                                       "Summary":  "Complete",
+                                       "CPU":  "Complete",
+                                       "Memory":  "Complete",
+                                       "Storage":  "Complete",
+                                       "Applications":  "Partial",
+                                       "Patches":  "Partial",
+                                       "UpdateHistory":  "NotRequested"
+                                   },
+                      "CoverageNotes":  {
+                                            "Applications":  "Registry-based inventory (machine-wide + loaded user profiles). Appx/Store packages not included (rerun with -IncludeAppx). Portable/unregistered software and apps in unloaded profiles are invisible to this method.",
+                                            "Patches":  "Quick Fix Engineering (QFE) installed-patch list. Microsoft documents that this class \"returns only the updates supplied by Component Based Servicing (CBS)\", so some installed updates never appear in it.",
+                                            "UpdateHistory":  "Rerun with -IncludeWindowsUpdates to include the local Windows Update installation history."
+                                        },
+                      "CollectionErrors":  [
+
+                                           ]
+                  }
+              ]
+}</script>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============================ utilities ============================ */
+
+  function $(sel, root) { return (root || document).querySelector(sel); }
+  function all(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined && text !== null) e.textContent = text;
+    return e;
+  }
+  function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+
+  function fmtBytes(b) {
+    if (b === null || b === undefined || isNaN(b)) return '\u2014';
+    var u = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'], i = 0, v = b;
+    while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
+    return (i === 0 ? v : v.toFixed(v >= 100 ? 0 : 1)) + ' ' + u[i];
+  }
+  function fmtNum(v) { return (v === null || v === undefined) ? '\u2014' : String(v); }
+  function fmtDate(v) {
+    if (!v) return '\u2014';
+    var d = new Date(v);
+    if (isNaN(d.getTime())) return String(v);   // registry InstallDate (yyyyMMdd) etc.
+    try { return d.toLocaleString(); } catch (e) { return String(v); }
+  }
+  function fmtPct(v) {
+    if (v === null || v === undefined) return '\u2014';
+    return String(Math.round(v * 10) / 10) + '%';
+  }
+  function statusClass(s) {
+    if (s === 'Success') return 'ok';
+    if (s === 'Partial') return 'warn';
+    return 'crit';
+  }
+  function coverageBadge(c) {
+    var map = { Complete: 'ok', Partial: 'warn', Failed: 'crit', NotRequested: 'muted' };
+    return el('span', 'badge ' + (map[c] || 'muted'), c || 'Unknown');
+  }
+
+  /* ============================ data ============================ */
+
+  var DATA = JSON.parse($('#report-data').textContent);
+  var HOSTS = (DATA.hosts || []).slice();
+
+  var state = { selected: 0 };
+
+  /* ============================ meters ============================ */
+
+  function levelClass(pct) {
+    if (pct === null || pct === undefined) return '';
+    if (pct >= 90) return 'crit';
+    if (pct >= 75) return 'warn';
+    return '';
+  }
+  function meter(pct, labelLeft, labelRight) {
+    var row = el('div', 'meter-row');
+    var lab = el('div', 'mr-label');
+    lab.appendChild(el('span', null, labelLeft));
+    if (labelRight !== undefined) lab.appendChild(el('b', null, labelRight));
+    var m = el('div', 'meter');
+    var f = el('div', 'meter-fill ' + levelClass(pct));
+    if (pct !== null && pct !== undefined && !isNaN(pct)) f.style.width = Math.max(0, Math.min(100, pct)) + '%';
+    else f.style.width = '0%';
+    m.appendChild(f);
+    row.appendChild(lab); row.appendChild(m);
+    return row;
+  }
+
+  /* ============================ tables ============================ */
+
+  var tableSeq = 0;
+  function makeTable(opts) {
+    // opts: {columns:[{key,label,format,numeric}], rows, name, searchable}
+    var columns = opts.columns, rows = opts.rows.slice();
+    var sortState = { col: -1, dir: 1 };
+    var query = '';
+
+    var wrap = el('div');
+    var toolbar = el('div', 'tbl-toolbar');
+
+    if (opts.searchable) {
+      var search = el('input'); search.type = 'search';
+      search.placeholder = 'Search ' + (opts.name || 'rows') + '\u2026';
+      search.setAttribute('aria-label', 'Search ' + (opts.name || ''));
+      search.addEventListener('input', function () {
+        query = search.value.toLowerCase();
+        renderBody();
+      });
+      toolbar.appendChild(search);
+    }
+
+    var csvBtn = el('button', 'btn', 'Export CSV');
+    csvBtn.addEventListener('click', function () { exportCsv(); });
+    toolbar.appendChild(csvBtn);
+
+    var count = el('span', 'count');
+    toolbar.appendChild(count);
+    wrap.appendChild(toolbar);
+
+    var tableWrap = el('div', 'table-wrap');
+    var table = el('table');
+    var thead = el('thead');
+    var headRow = el('tr');
+    columns.forEach(function (c, i) {
+      var th = el('th');
+      th.appendChild(document.createTextNode(c.label));
+      th.addEventListener('click', function () {
+        if (sortState.col === i) { sortState.dir *= -1; } else { sortState.col = i; sortState.dir = 1; }
+        renderBody();
+      });
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+    var tbody = el('tbody');
+    table.appendChild(tbody);
+    tableWrap.appendChild(table);
+    wrap.appendChild(tableWrap);
+
+    function cellText(row, c) {
+      var v = row[c.key];
+      if (c.format) return c.format(v, row);
+      return (v === null || v === undefined || v === '') ? '\u2014' : String(v);
+    }
+    function visibleRows() {
+      var out = rows;
+      if (query) {
+        out = rows.filter(function (r) {
+          return columns.some(function (c) { return cellText(r, c).toLowerCase().indexOf(query) !== -1; });
+        });
+      }
+      if (sortState.col >= 0) {
+        var col = columns[sortState.col];
+        out = out.slice().sort(function (a, b) {
+          var va = a[col.key], vb = b[col.key];
+          if (va === null || va === undefined) return 1;
+          if (vb === null || vb === undefined) return -1;
+          if (col.numeric || (typeof va === 'number' && typeof vb === 'number')) {
+            return (Number(va) - Number(vb)) * sortState.dir;
+          }
+          return String(va).localeCompare(String(vb), undefined, { numeric: true }) * sortState.dir;
+        });
+      }
+      return out;
+    }
+    function renderHead() {
+      all('th', thead).forEach(function (th, i) {
+        clear(th);
+        th.appendChild(document.createTextNode(columns[i].label));
+        if (sortState.col === i) th.appendChild(el('span', 'arrow', sortState.dir === 1 ? '\u25B2' : '\u25BC'));
+      });
+    }
+    function renderBody() {
+      renderHead();
+      clear(tbody);
+      var vis = visibleRows();
+      vis.forEach(function (r) {
+        var tr = el('tr');
+        columns.forEach(function (c) {
+          var td = el('td', c.numeric ? 'num' : null);
+          td.textContent = cellText(r, c);
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+      if (vis.length === 0) {
+        var tr = el('tr');
+        var td = el('td');
+        td.colSpan = columns.length;
+        td.className = 'empty';
+        td.textContent = 'No matching entries.';
+        tr.appendChild(td); tbody.appendChild(tr);
+      }
+      count.textContent = vis.length + ' of ' + rows.length + ' entries';
+    }
+    function exportCsv() {
+      var vis = visibleRows();
+      var lines = [columns.map(function (c) { return csvEsc(c.label); }).join(',')];
+      vis.forEach(function (r) {
+        lines.push(columns.map(function (c) { return csvEsc(cellText(r, c)); }).join(','));
+      });
+      var blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = el('a'); a.href = url; a.download = (opts.name || 'export') + '.csv';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 500);
+    }
+    function csvEsc(v) {
+      var s = String(v);
+      if (/[",\r\n]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
+      return s;
+    }
+
+    renderBody();
+    return wrap;
+  }
+
+  /* ============================ fleet ============================ */
+
+  function hostApps(h) { return (h.Applications || []); }
+  function hostPatches(h) { return (h.Patches || []); }
+  function hostRam(h) { return (h.Memory && h.Memory.TotalBytes) || 0; }
+  function hostCpuUtil(h) { return (h.Cpu && h.Cpu.UtilizationPercent) !== undefined && h.Cpu ? h.Cpu.UtilizationPercent : null; }
+  function hostRamPct(h) { return (h.Memory && h.Memory.UsedPercent !== undefined) ? h.Memory.UsedPercent : null; }
+
+  function renderFleet() {
+    // Summary stats
+    var grid = $('#statGrid'); clear(grid);
+    var online = HOSTS.filter(function (h) { return h.Status !== 'Unreachable'; });
+    var totalApps = HOSTS.reduce(function (n, h) { return n + hostApps(h).length; }, 0);
+    var totalPatches = HOSTS.reduce(function (n, h) { return n + hostPatches(h).length; }, 0);
+    var totalRam = HOSTS.reduce(function (n, h) { return n + hostRam(h); }, 0);
+    var totalDisk = HOSTS.reduce(function (n, h) { return n + ((h.Storage && h.Storage.TotalBytes) || 0); }, 0);
+    var freeDisk = HOSTS.reduce(function (n, h) { return n + ((h.Storage && h.Storage.FreeBytes) || 0); }, 0);
+    var diskPct = totalDisk > 0 ? ((totalDisk - freeDisk) / totalDisk) * 100 : null;
+
+    function stat(k, v, s) {
+      var d = el('div', 'stat');
+      d.appendChild(el('div', 'k', k));
+      d.appendChild(el('div', 'v', v));
+      if (s) d.appendChild(el('div', 's', s));
+      return d;
+    }
+    grid.appendChild(stat('Hosts', String(HOSTS.length), online.length + ' reachable'));
+    grid.appendChild(stat('Applications', String(totalApps), 'across all hosts'));
+    grid.appendChild(stat('Patches', String(totalPatches), 'across all hosts'));
+    grid.appendChild(stat('Total Memory', fmtBytes(totalRam), 'physical'));
+    grid.appendChild(stat('Total Storage', fmtBytes(totalDisk), fmtPct(diskPct) + ' used'));
+
+    // Aggregate storage bar
+    if (diskPct !== null) {
+      var card = el('div', 'stat');
+      card.appendChild(el('div', 'k', 'Fleet Storage Used'));
+      card.appendChild(meter(Math.round(diskPct * 10) / 10, 'Used ' + fmtBytes(totalDisk - freeDisk), fmtBytes(freeDisk) + ' free'));
+      grid.appendChild(card);
+    }
+
+    $('#fleetSub').textContent = HOSTS.length + ' host' + (HOSTS.length === 1 ? '' : 's') + ' analysed';
+
+    // Host cards
+    var hg = $('#hostGrid'); clear(hg);
+    HOSTS.forEach(function (h, i) {
+      var card = el('button', 'host-card' + (i === state.selected ? ' active' : ''));
+      var top = el('div', 'hc-top');
+      top.appendChild(el('span', 'dot ' + statusClass(h.Status)));
+      top.appendChild(el('span', 'hc-name', h.ComputerName || 'unknown'));
+      card.appendChild(top);
+
+      var os = (h.Summary && h.Summary.OSName) || '';
+      var arch = (h.Summary && h.Summary.OSArchitecture) || '';
+      card.appendChild(el('div', 'hc-os', [os, arch].filter(Boolean).join(' \u00b7 ') || 'Operating system unavailable'));
+
+      var chips = el('div', 'hc-chips');
+      function chip(txt, b) { var c = el('span', 'chip'); c.appendChild(document.createTextNode(txt + ' ')); c.appendChild(el('b', null, b)); return c; }
+      if (h.Cpu && h.Cpu.TotalLogicalProcessors) chips.appendChild(chip('vCPU', String(h.Cpu.TotalLogicalProcessors)));
+      if (hostRam(h)) chips.appendChild(chip('RAM', fmtBytes(hostRam(h))));
+      chips.appendChild(chip('Apps', String(hostApps(h).length)));
+      chips.appendChild(chip('Patches', String(hostPatches(h).length)));
+      if (h.Status === 'Partial' || h.Status === 'Failed') chips.appendChild(chip('Errors', String((h.CollectionErrors || []).length)));
+      card.appendChild(chips);
+
+      if (h.Status !== 'Unreachable') {
+        card.appendChild(meter(hostCpuUtil(h), 'CPU', fmtPct(hostCpuUtil(h))));
+        card.appendChild(meter(hostRamPct(h), 'Memory', fmtPct(hostRamPct(h))));
+      } else {
+        var e = el('div', 'err-panel');
+        e.appendChild(el('div', null, 'Unreachable: ' + ((h.CollectionErrors || [])[0] || 'connection failed')));
+        card.appendChild(e);
+      }
+
+      card.addEventListener('click', function () { selectHost(i); });
+      hg.appendChild(card);
+    });
+  }
+
+  /* ============================ host detail ============================ */
+
+  function kvCard(title, pairs) {
+    var card = el('div', 'card');
+    card.appendChild(el('h3', null, title));
+    var dl = el('dl', 'kv');
+    pairs.forEach(function (p) {
+      if (p[1] === undefined) return;
+      dl.appendChild(el('dt', null, p[0]));
+      var dd = el('dd', p[2] ? 'mono' : null);
+      dd.textContent = (p[1] === null || p[1] === '') ? '\u2014' : p[1];
+      dl.appendChild(dd);
+    });
+    card.appendChild(dl);
+    return card;
+  }
+
+  function renderHost(h) {
+    var body = $('#detailBody'); clear(body);
+    $('#detailTitle').textContent = 'Host Detail \u2014 ' + (h.ComputerName || 'unknown');
+    $('#detailSub').textContent = 'Collected ' + fmtDate(h.Timestamp) + ' \u00b7 Status: ' + h.Status;
+
+    if (h.Status === 'Unreachable') {
+      var err = el('div', 'err-panel');
+      err.appendChild(el('h3', null, 'Host unreachable'));
+      var ul = el('ul');
+      (h.CollectionErrors || []).forEach(function (e) { ul.appendChild(el('li', null, e)); });
+      err.appendChild(ul);
+      body.appendChild(err);
+      renderCoverage(h, body);
+      return;
+    }
+
+    /* ---- summary ---- */
+    if (h.Summary) {
+      var s = h.Summary;
+      var g = el('div', 'grid-2');
+      g.appendChild(kvCard('System Identity', [
+        ['Computer name', s.ComputerName], ['Domain', s.Domain], ['Manufacturer', s.Manufacturer],
+        ['Model', s.Model], ['Serial number', s.SerialNumber],
+        ['BIOS', s.BIOSVersion + (s.BIOSReleaseDate ? ' (' + fmtDate(s.BIOSReleaseDate) + ')' : '')],
+        ['Logon user', s.LogonUser]
+      ]));
+      g.appendChild(kvCard('Operating System', [
+        ['OS', s.OSName], ['Version', s.OSVersion + ' (build ' + s.OSBuildNumber + ')'],
+        ['Architecture', s.OSArchitecture], ['System drive', s.SystemDrive],
+        ['Installed', fmtDate(s.InstallDate)], ['Last boot', fmtDate(s.LastBootUpTime)],
+        ['Uptime', s.Uptime], ['Time zone', s.TimeZone]
+      ]));
+      body.appendChild(g);
+    }
+
+    /* ---- CPU / memory / storage ---- */
+    var perf = el('div', 'grid-3');
+
+    if (h.Cpu) {
+      var cpuCard = el('div', 'card');
+      cpuCard.appendChild(el('h3', null, 'CPU'));
+      if (h.Cpu.UtilizationPercent !== null && h.Cpu.UtilizationPercent !== undefined) {
+        cpuCard.appendChild(meter(h.Cpu.UtilizationPercent, 'Current utilization', fmtPct(h.Cpu.UtilizationPercent)));
+      }
+      var dl = el('dl', 'kv');
+      [['Cores', h.Cpu.TotalCores], ['Logical processors', h.Cpu.TotalLogicalProcessors]].forEach(function (p) {
+        dl.appendChild(el('dt', null, p[0]));
+        var dd = el('dd'); dd.textContent = fmtNum(p[1]); dl.appendChild(dd);
+      });
+      cpuCard.appendChild(dl);
+      if ((h.Cpu.Processors || []).length > 0) {
+        cpuCard.appendChild(el('div', 'note', (h.Cpu.Processors.length) + ' physical processor(s):'));
+        cpuCard.appendChild(makeTable({
+          name: 'processors', rows: h.Cpu.Processors, columns: [
+            { key: 'Name', label: 'Processor' },
+            { key: 'MaxClockSpeedMHz', label: 'Max speed', format: function (v) { return v ? v + ' MHz' : '\u2014'; }, numeric: true },
+            { key: 'NumberOfCores', label: 'Cores', numeric: true },
+            { key: 'NumberOfLogicalProcessors', label: 'Logical', numeric: true }
+          ]
+        }));
+      }
+      perf.appendChild(cpuCard);
+    }
+
+    if (h.Memory) {
+      var m = h.Memory;
+      var memCard = el('div', 'card');
+      memCard.appendChild(el('h3', null, 'Memory'));
+      memCard.appendChild(meter(m.UsedPercent, 'In use', fmtPct(m.UsedPercent)));
+      var dl2 = el('dl', 'kv');
+      [['Total', fmtBytes(m.TotalBytes)], ['Available', fmtBytes(m.AvailableBytes)]].forEach(function (p) {
+        dl2.appendChild(el('dt', null, p[0])); dl2.appendChild(el('dd', null, p[1]));
+      });
+      (m.PageFiles || []).forEach(function (pf) {
+        dl2.appendChild(el('dt', null, 'Page file'));
+        var dd = el('dd'); dd.textContent = pf.Name + ' \u00b7 ' + (pf.AllocatedSizeMB || 0) + ' MB alloc, ' + (pf.CurrentUsageMB || 0) + ' MB used'; dl2.appendChild(dd);
+      });
+      memCard.appendChild(dl2);
+      if ((m.Modules || []).length > 0) {
+        memCard.appendChild(el('div', 'note', m.Modules.length + ' module(s):'));
+        memCard.appendChild(makeTable({
+          name: 'memory-modules', rows: m.Modules, columns: [
+            { key: 'DeviceLocator', label: 'Slot' },
+            { key: 'CapacityBytes', label: 'Capacity', format: fmtBytes, numeric: true },
+            { key: 'SpeedMHz', label: 'Speed', format: function (v) { return v ? v + ' MHz' : '\u2014'; }, numeric: true },
+            { key: 'Manufacturer', label: 'Manufacturer' },
+            { key: 'PartNumber', label: 'Part number' }
+          ]
+        }));
+      }
+      perf.appendChild(memCard);
+    }
+
+    if (h.Storage) {
+      var stCard = el('div', 'card');
+      stCard.appendChild(el('h3', null, 'Storage'));
+      (h.Storage.Volumes || []).forEach(function (v) {
+        stCard.appendChild(meter(v.UsedPercent,
+          (v.DeviceID || '?') + (v.VolumeName ? ' (' + v.VolumeName + ')' : '') + (v.FileSystem ? ' \u00b7 ' + v.FileSystem : ''),
+          fmtBytes(v.FreeBytes) + ' free of ' + fmtBytes(v.SizeBytes)));
+      });
+      if ((h.Storage.PhysicalDisks || []).length > 0) {
+        stCard.appendChild(makeTable({
+          name: 'physical-disks', rows: h.Storage.PhysicalDisks, columns: [
+            { key: 'Model', label: 'Disk' },
+            { key: 'InterfaceType', label: 'Interface' },
+            { key: 'SizeBytes', label: 'Size', format: fmtBytes, numeric: true },
+            { key: 'Partitions', label: 'Partitions', numeric: true }
+          ]
+        }));
+      }
+      perf.appendChild(stCard);
+    }
+    if (perf.childNodes.length) body.appendChild(perf);
+
+    /* ---- applications ---- */
+    var appsCard = el('div', 'card');
+    appsCard.appendChild(el('h3', null, 'Installed Applications'));
+    appsCard.appendChild(el('span', 'badge ' + (coverageLevel(h, 'Applications')), 'Coverage: ' + (h.Coverage ? h.Coverage.Applications : 'n/a')));
+    if (hostApps(h).length > 0) {
+      appsCard.appendChild(makeTable({
+        name: 'applications', searchable: true, rows: hostApps(h), columns: [
+          { key: 'Name', label: 'Name' },
+          { key: 'Version', label: 'Version' },
+          { key: 'Publisher', label: 'Publisher' },
+          { key: 'InstallDate', label: 'Installed', format: function (v) { return v || '\u2014'; } },
+          { key: 'SizeMB', label: 'Size', format: function (v) { return v ? v + ' MB' : '\u2014'; }, numeric: true },
+          { key: 'Source', label: 'Source' }
+        ]
+      }));
+    } else {
+      appsCard.appendChild(el('div', 'empty',
+        'No application entries were returned (coverage: ' + (h.Coverage ? h.Coverage.Applications : 'n/a') + ').'));
+    }
+    body.appendChild(appsCard);
+
+    /* ---- patches ---- */
+    var patchCard = el('div', 'card');
+    patchCard.appendChild(el('h3', null, 'Installed Patches & Updates'));
+    patchCard.appendChild(el('span', 'badge ' + (coverageLevel(h, 'Patches')), 'Coverage: ' + (h.Coverage ? h.Coverage.Patches : 'n/a')));
+    if (hostPatches(h).length > 0) {
+      patchCard.appendChild(makeTable({
+        name: 'patches', searchable: true, rows: hostPatches(h), columns: [
+          { key: 'Id', label: 'ID / Title' },
+          { key: 'Description', label: 'Description' },
+          { key: 'InstalledOn', label: 'Installed on', format: fmtDate },
+          { key: 'InstalledBy', label: 'Installed by' },
+          { key: 'Source', label: 'Source' },
+          { key: 'Result', label: 'Result', format: function (v) { return v || '\u2014'; } }
+        ]
+      }));
+    } else {
+      patchCard.appendChild(el('div', 'empty',
+        'No patches were returned (coverage: ' + (h.Coverage ? h.Coverage.Patches : 'n/a') + ').'));
+    }
+    body.appendChild(patchCard);
+
+    /* ---- Windows Update history (separate, clearly labelled) ---------- */
+    if ((h.UpdateHistory || []).length > 0) {
+      var histCard = el('div', 'card');
+      histCard.appendChild(el('h3', null, 'Windows Update History (installation events)'));
+      histCard.appendChild(el('span', 'badge ' + (coverageLevel(h, 'UpdateHistory')), 'Coverage: ' + (h.Coverage ? h.Coverage.UpdateHistory : 'n/a')));
+      histCard.appendChild(el('div', 'note', 'Installation-event history from Windows Update - NOT the installed-patch inventory. Updates may later have been superseded or removed; counts are kept separate from the Patches section.'));
+      histCard.appendChild(makeTable({
+        name: 'update-history', searchable: true, rows: h.UpdateHistory, columns: [
+          { key: 'Id', label: 'Update' },
+          { key: 'Description', label: 'Type' },
+          { key: 'InstalledOn', label: 'Installed on', format: fmtDate },
+          { key: 'Result', label: 'Result' },
+          { key: 'InstalledBy', label: 'Requested by' }
+        ]
+      }));
+      body.appendChild(histCard);
+    }
+
+    renderCoverage(h, body);
+  }
+
+  function coverageLevel(h, cat) {
+    var map = { Complete: 'ok', Partial: 'warn', Failed: 'crit', NotRequested: 'muted' };
+    var c = h.Coverage && h.Coverage[cat];
+    return map[c] || 'muted';
+  }
+
+  function renderCoverage(h, body) {
+    var det = el('details', 'coverage');
+    var sum = el('summary', null, 'Collection coverage & errors');
+    det.appendChild(sum);
+    var inner = el('div');
+    var rows = [];
+    ['Summary', 'CPU', 'Memory', 'Storage', 'Applications', 'Patches', 'UpdateHistory'].forEach(function (cat) {
+      var st = h.Coverage ? h.Coverage[cat] : 'Unknown';
+      var note = (h.CoverageNotes && h.CoverageNotes[cat]) || '';
+      rows.push({ Category: cat, Status: st, Notes: note });
+    });
+    inner.appendChild(makeTable({
+      name: 'coverage', rows: rows, columns: [
+        { key: 'Category', label: 'Category' },
+        { key: 'Status', label: 'Status' },
+        { key: 'Notes', label: 'Notes / scope limits' }
+      ]
+    }));
+    if ((h.CollectionErrors || []).length > 0) {
+      var err = el('div', 'err-panel');
+      err.appendChild(el('div', null, 'Collection errors:'));
+      var ul = el('ul');
+      (h.CollectionErrors || []).forEach(function (e) { ul.appendChild(el('li', null, e)); });
+      err.appendChild(ul);
+      inner.appendChild(err);
+    }
+    det.appendChild(inner);
+    body.appendChild(det);
+  }
+
+  /* ============================ wiring ============================ */
+
+  function selectHost(i) {
+    state.selected = i;
+    all('.host-card').forEach(function (c, idx) { c.classList.toggle('active', idx === i); });
+    $('#hostSelect').value = String(i);
+    renderHost(HOSTS[i]);
+    var anchor = document.getElementById('hostDetail');
+    if (anchor && window.scrollY + 200 > anchor.offsetTop) anchor.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function init() {
+    $('#brandTitle').textContent = DATA.title || 'System Analysis Report';
+    document.title = DATA.title || 'System Analysis Report';
+    $('#generatedMeta').textContent = 'Generated ' + fmtDate(DATA.generatedUtc) + ' UTC';
+    $('#footerMeta').textContent = 'Generated ' + fmtDate(DATA.generatedUtc) + ' UTC \u00b7 ' + HOSTS.length + ' host(s)';
+
+    var sel = $('#hostSelect'); clear(sel);
+    HOSTS.forEach(function (h, i) {
+      var o = el('option');
+      o.value = String(i);
+      o.textContent = (h.ComputerName || 'unknown') + ' \u2014 ' + h.Status;
+      sel.appendChild(o);
+    });
+    sel.addEventListener('change', function () { selectHost(parseInt(sel.value, 10)); });
+
+    renderFleet();
+    if (HOSTS.length > 0) renderHost(HOSTS[0]);
+    else $('#detailBody').appendChild(el('div', 'empty', 'No analysis results were provided.'));
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
